@@ -1,0 +1,1 @@
+php /home/user/ngn-env/run/run.php "(new Ci('test'))->run()" NGN_ENV_PATH/ci
