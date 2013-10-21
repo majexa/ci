@@ -12,6 +12,7 @@ class GitBase {
     else {
       $this->server = [
         'sType'      => 'dev',
+        'branch'     => 'master',
         'baseDomain' => `hostname`,
       ];
     }
