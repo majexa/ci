@@ -1,0 +1,1 @@
+php ../run/run.php "(new Git)->push()" NGN_ENV_PATH/ci
