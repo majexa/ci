@@ -120,8 +120,10 @@ class Ci extends GitBase {
   protected function clear() {
     chdir(dirname(__DIR__).'/run');
     Cli::shell('php run.php "(new AllErrors)->clear()"');
-    $this->shellexec('php /home/user/ngn-env/pm/pm.php localProjects cc');
-    print $this->shellexec('php /home/user/ngn-env/pm/pm.php localProjects patch');
+    if (file_exists(NGN_ENV_PATH.'/projects')) {
+      $this->shellexec('php /home/user/ngn-env/pm/pm.php localProjects cc');
+      print $this->shellexec('php /home/user/ngn-env/pm/pm.php localProjects patch');
+    }
   }
 
   function run() {
