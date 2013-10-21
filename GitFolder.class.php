@@ -66,7 +66,7 @@ class GitFolder extends GitBase {
 
   protected function getRemotes() {
     $r = [];
-    foreach (parse_ini_file($this->folder.'/.git/config', true) as $k => $v) {
+    foreach (parse_ini_file($this->folder.'/.git/config', true, INI_SCANNER_RAW) as $k => $v) {
       if (Misc::hasPrefix('remote ', $k)) $r[] = Misc::removePrefix('remote ', $k);
     }
     return $r;
