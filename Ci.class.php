@@ -65,9 +65,9 @@ class Ci extends GitBase {
     chdir(NGN_ENV_PATH.'/run');
     $this->runTest('php run.php "(new TestRunner)->global()"');
     foreach (glob(NGN_ENV_PATH.'/*', GLOB_ONLYDIR) as $f) if (file_exists("$f/.ci")) {
-      $this->runTest('php run.php "(new TestRunner)->local()"');
+      $folderName = basename($f);
+      print `php ~/ngn-env/run/run.php "(new TestRunner)->local('$folderName')" $f`;
     }
-
   }
 
   protected function runProjectsTests() {
