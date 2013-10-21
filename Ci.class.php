@@ -27,7 +27,11 @@ class Ci extends GitBase {
   protected $updatedFolders = [];
 
   protected function update() {
-    foreach ($this->findGitFolders() as $folder) {
+    if (!($folders = $this->findGitFolders())) {
+      output("No git folders found");
+      return;
+    }
+    foreach ($folders as $folder) {
       if ($this->updateFolder($folder)) {
         output("$folder: updated");
         $this->updatedFolders[] = $folder;
@@ -57,23 +61,27 @@ class Ci extends GitBase {
   protected $commonMailText = '';
 
   protected function _runTests() {
+    $this->runProjectsTests();
+    chdir(NGN_ENV_PATH.'/run');
+    $this->runTest('php run.php "(new TestRunner)->global()"');
+    $this->runTest('php run.php "(new TestRunner)->local()"');
+  }
+
+  protected function runProjectsTests() {
+    if (!file_exists(NGN_ENV_PATH.'/projects')) return;
     $domain = 'test.'.$this->server['baseDomain'];
     chdir(dirname(__DIR__).'/pm');
     $this->shellexec("php pm.php localServer createProject test $domain common");
-    //$this->shellexec('php pm.php localProject delete test');
-    //$this->shellexec("php pm.php localServer createProject test $domain sb");
     chdir(dirname(__DIR__).'/run');
     $this->runTest('php site.php test "(new ProjectTestRunner)->projectGlobal()"');
     chdir(dirname(__DIR__).'/pm');
     $this->shellexec('php pm.php localProject delete test');
     chdir(dirname(__DIR__).'/run');
-    foreach (glob('/home/user/ngn-env/projects/*', GLOB_ONLYDIR) as $f) {
+    foreach (glob(NGN_ENV_PATH.'/projects/*', GLOB_ONLYDIR) as $f) {
       if (!is_dir("$f/.git")) continue;
       $project = basename($f);
       $this->runTest('php site.php '.$project.' "(new ProjectTestRunner)->projectLocal()"'); // project level specific tests. on project $project
     }
-    chdir(dirname(__DIR__).'/run');
-    $this->runTest('php run.php "(new TestRunner)->global()"');
   }
 
   protected function runTests() {

@@ -5,8 +5,16 @@ class GitBase {
   protected $server, $cwd, $masterBranch = 'master', $paths = [];
 
   function __construct() {
-    $this->server = require NGN_ENV_PATH.'/config/server.php';
-    Arr::checkEmpty($this->server, ['sType', 'baseDomain']);
+    if (file_exists(NGN_ENV_PATH.'/config/server.php')) {
+      $this->server = require NGN_ENV_PATH.'/config/server.php';
+      Arr::checkEmpty($this->server, ['sType', 'baseDomain']);
+    }
+    else {
+      $this->server = [
+        'sType'      => 'dev',
+        'baseDomain' => `hostname`,
+      ];
+    }
     $this->cwd = getcwd();
     $home = dirname(NGN_ENV_PATH);
     $this->paths = [
