@@ -6,10 +6,10 @@
  * @method update
  * @method release
  */
-class GitRefactor extends GitBase {
+class Git extends GitBase {
 
   function __call($method, $args) {
-    foreach ($this->findGitFolders() as $folder) (new GitDevFolder($folder))->$method();
+    foreach ($this->findGitFolders() as $folder) (new GitFolder($folder))->$method();
     chdir($this->cwd);
   }
 

@@ -6,6 +6,7 @@ class GitBase {
 
   function __construct() {
     $this->server = require NGN_ENV_PATH.'/config/server.php';
+    Arr::checkEmpty($this->server, ['sType', 'baseDomain']);
     $this->cwd = getcwd();
     $home = dirname(NGN_ENV_PATH);
     $this->paths = [
