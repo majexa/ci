@@ -25,6 +25,7 @@ class Ci extends GitBase {
   }
 
   protected $updatedFolders = [];
+  protected $isChanges = false;
 
   protected function update() {
     if (!($folders = $this->findGitFolders())) {
