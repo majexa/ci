@@ -49,7 +49,7 @@ class Ci extends GitBase {
 
   protected function shellexec($cmd) {
     $r = Cli::shell($cmd);
-    if (preg_match('/error/i', $r) or preg_match('/error/i', $r)) $this->errorsText .= $r;
+    if (preg_match('/(?<!all)error/i', $r) or preg_match('/fatal/i', $r)) $this->errorsText .= $r;
     return $r;
   }
 
@@ -63,11 +63,12 @@ class Ci extends GitBase {
   protected function _runTests() {
     $this->runProjectsTests();
     chdir(NGN_ENV_PATH.'/run');
-    $this->runTest('php run.php "(new TestRunner)->global()"');
     foreach (glob(NGN_ENV_PATH.'/*', GLOB_ONLYDIR) as $f) if (file_exists("$f/.ci")) {
       $folderName = basename($f);
       print `php ~/ngn-env/run/run.php "(new TestRunner)->local('$folderName')" $f`;
     }
+    if (file_exists(NGN_ENV_PATH.'/projects')) $this->runTest('php run.php "(new TestRunner)->global()"');
+    else $this->runTest('php run.php "(new TestRunner(\'allErrors\'))->global()"');
   }
 
   protected function runProjectsTests() {
@@ -99,7 +100,7 @@ class Ci extends GitBase {
 
   protected function sendResults() {
     if ($this->errorsText) {
-      (new SendEmail)->send('masted311@gmail.com', "Errors on {$this->server['baseDomain']}", $this->commonMailText.$this->errorsText, false);
+      (new SendEmail)->send('masted311@gmail.com', "Errors on {$this->server['baseDomain']}", '<pre>'.$this->commonMailText.$this->errorsText.'</pre>');
       print $this->errorsText;
     }
     else {
@@ -127,7 +128,7 @@ class Ci extends GitBase {
   }
 
   function run() {
-    $this->update();
+    //$this->update();
     $this->clear();
     $this->runTests();
     $this->restart();
