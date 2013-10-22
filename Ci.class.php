@@ -61,11 +61,13 @@ class Ci extends GitBase {
   protected $commonMailText = '';
 
   protected function _runTests() {
-    $this->runProjectsTests();
-    chdir(NGN_ENV_PATH.'/run');
-    foreach (glob(NGN_ENV_PATH.'/*', GLOB_ONLYDIR) as $f) if (file_exists("$f/.ci")) {
-      $folderName = basename($f);
-      print `php ~/ngn-env/run/run.php "(new TestRunner)->local('$folderName')" $f`;
+    if ($this->server['sType'] != 'prod') {
+      $this->runProjectsTests();
+      chdir(NGN_ENV_PATH.'/run');
+      foreach (glob(NGN_ENV_PATH.'/*', GLOB_ONLYDIR) as $f) if (file_exists("$f/.ci")) {
+        $folderName = basename($f);
+        print `php ~/ngn-env/run/run.php "(new TestRunner)->local('$folderName')" $f`;
+      }
     }
     if (file_exists(NGN_ENV_PATH.'/projects')) {
       // Если это сервер с проектами
