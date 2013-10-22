@@ -14,9 +14,9 @@ class Ci extends GitBase {
 
   protected function updateFolder($folder) {
     chdir($folder);
-    $this->shellexec("git fetch origin");
-    $wdCommit = $this->shellexec("git rev-parse HEAD");
-    $repoCommit = $this->shellexec("git rev-parse origin");
+    $this->shellexec("git fetch origin", false);
+    $wdCommit = $this->shellexec("git rev-parse HEAD", false);
+    $repoCommit = $this->shellexec("git rev-parse origin", false);
     if ($wdCommit != $repoCommit) {
       $this->shellexec("git reset --hard origin");
       return true;
@@ -47,8 +47,8 @@ class Ci extends GitBase {
 
   protected $errorsText = '';
 
-  protected function shellexec($cmd) {
-    $r = Cli::shell($cmd);
+  protected function shellexec($cmd, $output = true) {
+    $r = Cli::shell($cmd, $output);
     if (preg_match('/(?<!all)error/i', $r) or preg_match('/fatal/i', $r)) $this->errorsText .= $r;
     return $r;
   }
