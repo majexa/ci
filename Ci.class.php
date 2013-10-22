@@ -128,7 +128,7 @@ class Ci extends GitBase {
   }
 
   function run() {
-    //$this->update();
+    $this->update();
     $this->clear();
     $this->runTests();
     $this->restart();
