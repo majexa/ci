@@ -1,0 +1,1 @@
+php ../run/site.php test "(new ProjectTestRunner(['ddAllFields']))->projectGlobal()"
