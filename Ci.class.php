@@ -14,9 +14,9 @@ class Ci extends GitBase {
 
   protected function updateFolder($folder) {
     chdir($folder);
-    $this->shellexec("git fetch origin");
-    $wdCommit = $this->shellexec("git rev-parse HEAD");
-    $repoCommit = $this->shellexec("git rev-parse origin");
+    $this->shellexec("git fetch origin", false);
+    $wdCommit = $this->shellexec("git rev-parse HEAD", false);
+    $repoCommit = $this->shellexec("git rev-parse origin", false);
     if ($wdCommit != $repoCommit) {
       $this->shellexec("git reset --hard origin");
       return true;
@@ -25,6 +25,7 @@ class Ci extends GitBase {
   }
 
   protected $updatedFolders = [];
+  protected $isChanges = false;
 
   protected function update() {
     if (!($folders = $this->findGitFolders())) {
@@ -47,8 +48,8 @@ class Ci extends GitBase {
 
   protected $errorsText = '';
 
-  protected function shellexec($cmd) {
-    $r = Cli::shell($cmd);
+  protected function shellexec($cmd, $output = true) {
+    $r = Cli::shell($cmd, $output);
     if (preg_match('/(?<!all)error/i', $r) or preg_match('/fatal/i', $r)) $this->errorsText .= $r;
     return $r;
   }
@@ -61,13 +62,23 @@ class Ci extends GitBase {
   protected $commonMailText = '';
 
   protected function _runTests() {
-    $this->runProjectsTests();
-    chdir(NGN_ENV_PATH.'/run');
-    foreach (glob(NGN_ENV_PATH.'/*', GLOB_ONLYDIR) as $f) if (file_exists("$f/.ci")) {
-      $folderName = basename($f);
-      print `php ~/ngn-env/run/run.php "(new TestRunner)->local('$folderName')" $f`;
+    if ($this->server['sType'] != 'prod') {
+      $this->runProjectsTests();
+      chdir(NGN_ENV_PATH.'/run');
+      foreach (glob(NGN_ENV_PATH.'/*', GLOB_ONLYDIR) as $f) if (file_exists("$f/.ci")) {
+        $folderName = basename($f);
+        print `php ~/ngn-env/run/run.php "(new TestRunner)->local('$folderName')" $f`;
+      }
     }
-    if (file_exists(NGN_ENV_PATH.'/projects')) $this->runTest('php run.php "(new TestRunner)->global()"');
+    if (file_exists(NGN_ENV_PATH.'/projects')) {
+      // Если это сервер с проектами
+      if ($this->server['sType'] == 'prod') {
+        // Для продакшена запускаем только эти тесты
+        $this->runTest('php run.php "(new TestRunner([\'projectsIndexAvailable\', \'allErrors\']))->global()"');
+      } else {
+        $this->runTest('php run.php "(new TestRunner)->global()"');
+      }
+    }
     else $this->runTest('php run.php "(new TestRunner(\'allErrors\'))->global()"');
   }
 
@@ -89,8 +100,7 @@ class Ci extends GitBase {
   }
 
   protected function runTests() {
-    if (($this->server['sType'] != 'prod' and $this->updatedFolders and $this->forceParam != 'update') or $this->forceParam == 'test') {
-      if ($this->server['sType'] == 'prod') throw new Exception("U can't run tests on production server");
+    if (($this->updatedFolders and $this->forceParam != 'update') or $this->forceParam == 'test') {
       $this->_runTests();
     }
     else {
@@ -128,7 +138,7 @@ class Ci extends GitBase {
   }
 
   function run() {
-    //$this->update();
+    $this->update();
     $this->clear();
     $this->runTests();
     $this->restart();
