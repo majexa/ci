@@ -12,13 +12,21 @@ class Ci extends GitBase {
     $this->forceParam = $forceParam;
   }
 
-  protected function updateFolder($folder) {
+
+  protected function wdRev() {
+    return trim($this->shellexec("git rev-parse HEAD", false));
+  }
+  protected function repoRev($remote) {
+    return trim($this->shellexec("git rev-parse $remote", false));
+  }
+
+  function updateFolder($folder) {
     chdir($folder);
     $updated = false;
     foreach ((new GitFolder($folder))->getRemotes() as $remote) {
-      $this->shellexec("git fetch $remote master", false);
-      $wdCommit = $this->shellexec("git rev-parse HEAD", false);
-      $repoCommit = $this->shellexec("git rev-parse $remote", false);
+      $this->shellexec("git fetch $remote");
+      $wdCommit = $this->wdRev();
+      $repoCommit = $this->repoRev($remote);
       if ($wdCommit != $repoCommit) {
         $this->shellexec("git reset --hard $remote/master");
         $updated = true;
