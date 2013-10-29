@@ -14,16 +14,17 @@ class Ci extends GitBase {
 
   protected function updateFolder($folder) {
     chdir($folder);
-    foreach ($this->getRemotes() as $v) {
+    $updated = false;
+    foreach ((new GitFolder($folder))->getRemotes() as $remote) {
+      $this->shellexec("git fetch $remote master", false);
+      $wdCommit = $this->shellexec("git rev-parse HEAD", false);
+      $repoCommit = $this->shellexec("git rev-parse $remote", false);
+      if ($wdCommit != $repoCommit) {
+        $this->shellexec("git reset --hard $remote/master");
+        $updated = true;
+      }
     }
-    $this->shellexec("git fetch origin", false);
-    $wdCommit = $this->shellexec("git rev-parse HEAD", false);
-    $repoCommit = $this->shellexec("git rev-parse origin", false);
-    if ($wdCommit != $repoCommit) {
-      $this->shellexec("git reset --hard origin/master");
-      return true;
-    }
-    return false;
+    return $updated;
   }
 
   protected $updatedFolders = [];
