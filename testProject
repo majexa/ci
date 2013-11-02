@@ -3,4 +3,4 @@ if [ ! -d ../projects/test ]; then
   php ../pm/php pm.php localServer createProject test test.projects1.majexa.ru common
   php ../pm/php pm.php localProject replaceConstant test core IS_DEBUG true
 fi
-php ../run/site.php test "(new ProjectTestRunner(['ddAllFields']))->global()"
+php ../run/site.php test "(new ProjectTestRunner(['$1']))->global()" $2
