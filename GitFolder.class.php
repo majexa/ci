@@ -9,7 +9,6 @@ class GitFolder extends GitBase {
 
   function __construct($folder) {
     parent::__construct();
-    Arr::checkEmpty($this->server, 'branch');
     $this->folder = $folder;
     chdir($this->folder);
   }

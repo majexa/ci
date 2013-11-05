@@ -16,6 +16,7 @@ class GitBase {
         'baseDomain' => `hostname`,
       ];
     }
+    if (!isset($this->server['branch'])) $this->server['branch'] = 'master';
     $this->cwd = getcwd();
     $home = dirname(NGN_ENV_PATH);
     $this->paths = [
