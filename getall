@@ -1,0 +1,2 @@
+php ../run/run.php "(new GitRepo)->download()" NGN_ENV_PATH/ci
+
