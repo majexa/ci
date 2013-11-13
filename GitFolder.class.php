@@ -11,6 +11,7 @@ class GitFolder extends GitBase {
     parent::__construct();
     $this->folder = $folder;
     chdir($this->folder);
+    output("------ Processing '{$this->folder}'");
   }
 
   protected function currentBranch() {
