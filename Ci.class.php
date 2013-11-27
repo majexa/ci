@@ -154,11 +154,35 @@ class Ci extends GitBase {
     }
   }
 
+  protected function findCronFiles() {
+    $files = [];
+    foreach ($this->paths as $path) {
+      foreach (glob("$path/*", GLOB_ONLYDIR) as $folder) {
+        if (!file_exists("$folder/.cron") or is_dir("$folder/.cron")) continue;
+        $files[] = "$folder/.cron";
+      }
+    }
+    return $files;
+  }
+
+  function updateCron() {
+    $cron = '';
+    foreach ($this->findCronFiles() as $file) $cron .= trim(file_get_contents($file))."\n";
+    $cron .= $this->shellexec('php /home/user/ngn-env/pm/pm.php localProjects cron');
+    if ($this->server['sType'] != 'prod') $cron .= "*/10 * * * * php /home/user/ngn-env/ci/update\n";
+    $currentCron = $this->shellexec("crontab -l");
+    if ($cron and $cron != $currentCron) {
+      file_put_contents('/tmp/.crontab', $cron);
+      print $this->shellexec("crontab /tmp/.crontab");
+    }
+  }
+
   function run() {
     $this->update();
     $this->clear();
     $this->runTests();
     $this->restart();
+    $this->updateCron();
     $this->sendResults();
     chdir($this->cwd);
   }
