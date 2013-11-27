@@ -16,8 +16,13 @@ class Ci extends GitBase {
   protected function wdRev() {
     return trim($this->shellexec("git rev-parse HEAD", false));
   }
+
   protected function repoRev($remote) {
     return trim($this->shellexec("git rev-parse $remote", false));
+  }
+
+  protected function currentBranch() {
+    return trim($this->shellexec("git rev-parse --abbrev-ref HEAD", false));
   }
 
   function updateFolder($folder) {
@@ -28,7 +33,8 @@ class Ci extends GitBase {
       $wdCommit = $this->wdRev();
       $repoCommit = $this->repoRev($remote);
       if ($wdCommit != $repoCommit) {
-        $this->shellexec("git reset --hard $remote/master");
+        $branch = $this->currentBranch();
+        $this->shellexec("git reset --hard $remote/$branch");
         $updated = true;
       }
     }
