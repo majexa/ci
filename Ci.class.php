@@ -139,7 +139,7 @@ class Ci extends GitBase {
     }
   }
 
-  protected function restart() {
+  function restart() {
     if ($this->updatedFolders or $this->forceParam == 'update') {
       $this->shellexec('php /home/user/ngn-env/pm/pm.php localProjects restart');
     }
