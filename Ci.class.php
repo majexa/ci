@@ -177,12 +177,17 @@ class Ci extends GitBase {
     }
   }
 
+  function projectsCommand($action) {
+    $this->shellexec("php /home/user/ngn-env/pm/pm.php localProjects $action");
+  }
+
   function run() {
     $this->update();
     $this->clear();
     $this->runTests();
     $this->restart();
     $this->updateCron();
+    $this->projectsCommand('cron');
     $this->sendResults();
     chdir($this->cwd);
   }

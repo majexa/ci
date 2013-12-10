@@ -56,6 +56,9 @@ class GitFolder extends GitBase {
   }
 
   function push() {
+    output("Pushing {$this->folder}. Wait 10 sec...");
+    sleep(10);
+    output("Started");
     print `git add .`;
     print `git commit -am "Auto push from {$this->server['baseDomain']}"`;
     foreach ($this->getRemotes() as $remote) {
