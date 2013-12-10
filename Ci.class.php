@@ -150,7 +150,7 @@ class Ci extends GitBase {
     Cli::shell('php run.php "(new AllErrors)->clear()"');
     if (file_exists(NGN_ENV_PATH.'/projects')) {
       $this->shellexec('php /home/user/ngn-env/pm/pm.php localProjects cc');
-      print $this->shellexec('php /home/user/ngn-env/pm/pm.php localProjects patch');
+      //print $this->shellexec('php /home/user/ngn-env/pm/pm.php localProjects patch');
     }
   }
 
