@@ -18,9 +18,9 @@ class GitFolder extends GitBase {
   }
   
   protected function resetToRemote($remote) {
-    output("Fetch '{$this->folder}' folder");
+    //output("Fetch '{$this->folder}' folder");
     chdir($this->folder);
-    $this->shellexec("git fetch $remote");
+    $this->shellexec("git fetch $remote", false);
     $wdCommit = $this->wdRev();
     $repoCommit = $this->repoRev($remote);
     if ($wdCommit != $repoCommit) {
