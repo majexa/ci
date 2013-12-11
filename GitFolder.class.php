@@ -11,32 +11,35 @@ class GitFolder extends GitBase {
     parent::__construct();
     $this->folder = $folder;
     chdir($this->folder);
-    output("------ Processing '{$this->folder}'");
-  }
-
-  protected function currentBranch() {
-    foreach (explode("\n", `git branch`) as $branch) {
-      if (strstr($branch, '* ')) return str_replace('* ', '', $branch);
-    }
-    throw new Exception("Something wrong");
   }
 
   function reset() {
-    print "Try reset '$this->folder'\n";
-    print `git fetch origin`;
-    if ($this->isClean()) return;
-    print "Reset '$this->folder'\n";
-    print `git ls-files --other --exclude-standard`;
-    print `git ls-files --other --exclude-standard | xargs rm`;
-    print `git reset --hard origin/{$this->server['branch']}`;
+    return $this->resetToRemote('origin');
+  }
+  
+  protected function resetToRemote($remote) {
+    if (!strstr($this->folder, 'poiskk')) return;
+    output("Fetch '{$this->folder}' folder");
+    chdir($this->folder);
+    $this->shellexec("git fetch $remote");
+    //print `git fetch origin`;
+    $wdCommit = $this->wdRev();
+    $repoCommit = $this->repoRev($remote);
+    return;
+    if ($wdCommit != $repoCommit) {
+      output("Resetting folder '{$this->folder}' to the HEAD of '$remote' remote");
+      $this->shellexec("git reset --hard $remote/{$this->wdBranch()}");
+      return true;
+    }
+    return false;
   }
 
   protected function isClean() {
-    return (bool)strstr(`git status`, '(working directory clean)');
+    return (bool)strstr($this->shellexec("git status"), '(working directory clean)');
   }
 
   function start() {
-    $branch = $this->currentBranch();
+    $branch = $this->wdBranch();
     if ($branch == $this->masterBranch and !$this->isClean()) {
       print "U must cleanup working dir '$this->folder' first. Some changes presents in current local $this->masterBranch branch.\n";
       return;
@@ -46,13 +49,13 @@ class GitFolder extends GitBase {
       return;
     }
     print "Pulling '$this->folder' from $this->masterBranch branch.\n";
-    print `git pull origin $this->masterBranch`;
-    print `git checkout -b {$this->server['branch']}`;
+    $this->shellexec("git pull origin $this->masterBranch");
+    $this->shellexec("git checkout -b {$this->server['branch']}");
   }
 
   function update() {
-    print `git pull origin $this->masterBranch`;
-    print `git pull origin {$this->server['branch']}`;
+    $this->shellexec("git pull origin $this->masterBranch");
+    $this->shellexec("git pull origin {$this->server['branch']}");
   }
 
   function push() {
@@ -62,17 +65,9 @@ class GitFolder extends GitBase {
     print `git add .`;
     print `git commit -am "Auto push from {$this->server['baseDomain']}"`;
     foreach ($this->getRemotes() as $remote) {
-      Cli::shell("git pull $remote {$this->server['branch']}");
-      Cli::shell("git push $remote {$this->server['branch']}");
+      $this->shellexec("git pull $remote {$this->server['branch']}");
+      $this->shellexec("git push $remote {$this->server['branch']}");
     }
-  }
-
-  function getRemotes() {
-    $r = [];
-    foreach (parse_ini_file($this->folder.'/.git/config', true, INI_SCANNER_RAW) as $k => $v) {
-      if (Misc::hasPrefix('remote ', $k)) $r[] = trim(Misc::removePrefix('remote ', $k), '"');
-    }
-    return $r;
   }
 
   function release() {

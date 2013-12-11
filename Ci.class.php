@@ -12,35 +12,6 @@ class Ci extends GitBase {
     $this->forceParam = $forceParam;
   }
 
-
-  protected function wdRev() {
-    return trim($this->shellexec("git rev-parse HEAD", false));
-  }
-
-  protected function repoRev($remote) {
-    return trim($this->shellexec("git rev-parse $remote", false));
-  }
-
-  protected function currentBranch() {
-    return trim($this->shellexec("git rev-parse --abbrev-ref HEAD", false));
-  }
-
-  function updateFolder($folder) {
-    chdir($folder);
-    $updated = false;
-    foreach ((new GitFolder($folder))->getRemotes() as $remote) {
-      $this->shellexec("git fetch $remote");
-      $wdCommit = $this->wdRev();
-      $repoCommit = $this->repoRev($remote);
-      if ($wdCommit != $repoCommit) {
-        $branch = $this->currentBranch();
-        $this->shellexec("git reset --hard $remote/$branch");
-        $updated = true;
-      }
-    }
-    return $updated;
-  }
-
   protected $updatedFolders = [];
   protected $isChanges = false;
 
@@ -50,7 +21,7 @@ class Ci extends GitBase {
       return;
     }
     foreach ($folders as $folder) {
-      if ($this->updateFolder($folder)) {
+      if ((new GitFolder($folder))->reset()) {
         output("$folder: updated");
         $this->updatedFolders[] = $folder;
       }
@@ -61,14 +32,6 @@ class Ci extends GitBase {
     if ($this->updatedFolders) {
       $this->commonMailText = "Deploy by Continuous integration system at ".date('d.m.Y H:i:s')."\nUpdated folders:\n".implode("\n", $this->updatedFolders)."\n===================\n\n";
     }
-  }
-
-  protected $errorsText = '';
-
-  protected function shellexec($cmd, $output = true) {
-    $r = Cli::shell($cmd, $output);
-    if (preg_match('/(?<!all)error/i', $r) or preg_match('/fatal/i', $r)) $this->errorsText .= $r;
-    return $r;
   }
 
   protected function runTest($cmd) {
@@ -150,7 +113,7 @@ class Ci extends GitBase {
     Cli::shell('php run.php "(new AllErrors)->clear()"');
     if (file_exists(NGN_ENV_PATH.'/projects')) {
       $this->shellexec('php /home/user/ngn-env/pm/pm.php localProjects cc');
-      print $this->shellexec('php /home/user/ngn-env/pm/pm.php localProjects patch');
+      //print $this->shellexec('php /home/user/ngn-env/pm/pm.php localProjects patch');
     }
   }
 
@@ -183,6 +146,7 @@ class Ci extends GitBase {
 
   function run() {
     $this->update();
+    return;
     $this->clear();
     $this->runTests();
     $this->restart();

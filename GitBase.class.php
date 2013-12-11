@@ -38,4 +38,51 @@ class GitBase {
     return $folders;
   }
 
+  protected $errorsText = '';
+
+  protected function shellexec($cmd, $output = true) {
+    $r = Cli::shell($cmd, $output);
+    // if (preg_match('/(?<!all)error/i', $r) or preg_match('/fatal/i', $r)) throw new Exception("Problems while running cmd '$cmd':\n$r");
+    if (preg_match('/(?<!all)error/i', $r) or preg_match('/fatal/i', $r)) $this->errorsText .= $r;
+    return $r;
+  }
+
+  protected function wdRev() {
+    return trim($this->shellexec("git rev-parse HEAD"));
+  }
+
+  protected function repoRev($remote) {
+    return trim($this->shellexec("git rev-parse refs/remotes/$remote/master"));
+  }
+
+  /**
+   * Возвращает имя ветви текущего рабочего каталога
+   *
+   * @return string
+   * @throws Exception
+   */
+  protected function wdBranch_old() {
+    foreach (explode("\n", `git branch`) as $branch) {
+      if (strstr($branch, '* ')) return str_replace('* ', '', $branch);
+    }
+    throw new Exception("Something wrong");
+  }
+
+  /**
+   * Возвращает имя ветви текущего рабочего каталога
+   *
+   * @return string
+   */
+  protected function wdBranch() {
+    return trim($this->shellexec("git rev-parse --abbrev-ref HEAD", false));
+  }
+
+  function getRemotes() {
+    $r = [];
+    foreach (parse_ini_file($this->folder.'/.git/config', true, INI_SCANNER_RAW) as $k => $v) {
+      if (Misc::hasPrefix('remote ', $k)) $r[] = trim(Misc::removePrefix('remote ', $k), '"');
+    }
+    return $r;
+  }
+
 }
