@@ -18,7 +18,6 @@ class GitFolder extends GitBase {
   }
   
   protected function resetToRemote($remote) {
-    if (!strstr($this->folder, 'poiskk')) return;
     output("Fetch '{$this->folder}' folder");
     chdir($this->folder);
     $this->shellexec("git fetch $remote");
