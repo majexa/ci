@@ -21,10 +21,8 @@ class GitFolder extends GitBase {
     output("Fetch '{$this->folder}' folder");
     chdir($this->folder);
     $this->shellexec("git fetch $remote");
-    //print `git fetch origin`;
     $wdCommit = $this->wdRev();
     $repoCommit = $this->repoRev($remote);
-    return;
     if ($wdCommit != $repoCommit) {
       output("Resetting folder '{$this->folder}' to the HEAD of '$remote' remote");
       $this->shellexec("git reset --hard $remote/{$this->wdBranch()}");

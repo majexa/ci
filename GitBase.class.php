@@ -48,11 +48,11 @@ class GitBase {
   }
 
   protected function wdRev() {
-    return trim($this->shellexec("git rev-parse HEAD"));
+    return trim($this->shellexec("git rev-parse HEAD", false));
   }
 
   protected function repoRev($remote) {
-    return trim($this->shellexec("git rev-parse refs/remotes/$remote/master"));
+    return trim($this->shellexec("git rev-parse refs/remotes/$remote/master", false));
   }
 
   /**
