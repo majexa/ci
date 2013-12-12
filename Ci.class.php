@@ -68,7 +68,7 @@ class Ci extends GitBase {
     chdir(dirname(__DIR__).'/pm');
     $this->shellexec("php pm.php localServer createProject test $domain common");
     chdir(dirname(__DIR__).'/run');
-    $this->runTest('php site.php test "(new ProjectTestRunner)->projectGlobal()"');
+    $this->runTest('php site.php test "(new ProjectTestRunner)->global()"');
     chdir(dirname(__DIR__).'/pm');
     $this->shellexec('php pm.php localProject delete test');
     chdir(dirname(__DIR__).'/run');
