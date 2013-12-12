@@ -89,7 +89,7 @@ class Ci extends GitBase {
   }
 
   protected function sendResults() {
-    if ($this->errorsText) {
+    if ($this->errorsText) {//
       (new SendEmail)->send('masted311@gmail.com', "Errors on {$this->server['baseDomain']}", '<pre>'.$this->commonMailText.$this->errorsText.'</pre>');
       print $this->errorsText;
     }
