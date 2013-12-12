@@ -36,7 +36,7 @@ class Ci extends GitBase {
 
   protected function runTest($cmd) {
     $testResult = $this->shellexec($cmd);
-    if (strstr($testResult, 'FAILURES!') or strstr($testResult, 'Fatal error')) $this->errorsText .= $testResult;
+    if (strstr($testResult, 'FAILURES!') or strstr($testResult, 'Fatal error') or strstr($testResult, 'fault')) $this->errorsText .= $testResult;
   }
 
   protected $commonMailText = '';
