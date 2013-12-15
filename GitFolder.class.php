@@ -62,7 +62,7 @@ class GitFolder extends GitBase {
       output("$this->folder: no remotes");
       return;
     }
-    output("Started");
+    output("$this->folder: started");
     print `git add .`;
     print `git commit -am "Auto push from {$this->server['baseDomain']}"`;
     foreach ($this->getRemotes() as $remote) {
