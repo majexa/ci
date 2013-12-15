@@ -66,7 +66,7 @@ class GitFolder extends GitBase {
     print `git add .`;
     print `git commit -am "Auto push from {$this->server['baseDomain']}"`;
     foreach ($remotes as $remote) {
-      output("$folder: process remote '$remote'");
+      output("$folder: process remote '$remote' ------------------------------");
       $this->shellexec("git pull $remote {$this->server['branch']}");
       $this->shellexec("git push $remote {$this->server['branch']}");
     }
