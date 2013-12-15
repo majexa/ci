@@ -55,13 +55,18 @@ class GitFolder extends GitBase {
     $this->shellexec("git pull origin {$this->server['branch']}");
   }
 
-  function push() {
-    output("Pushing {$this->folder}. Wait 10 sec...");
-    sleep(10);
+  function push($remoteFilter = []) {
+    if ($remoteFilter) $remoteFilter = (array)$remoteFilter;
+    //die2([$this->getRemotes(), $remoteFilter]);
+    if (!($remotes = array_intersect($this->getRemotes(), $remoteFilter))) {
+      output("$this->folder: no remotes");
+      return;
+    }
     output("Started");
     print `git add .`;
     print `git commit -am "Auto push from {$this->server['baseDomain']}"`;
     foreach ($this->getRemotes() as $remote) {
+      if (in_array($remote, $remoteFilter)) continue;
       $this->shellexec("git pull $remote {$this->server['branch']}");
       $this->shellexec("git push $remote {$this->server['branch']}");
     }
