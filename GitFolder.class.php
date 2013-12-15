@@ -61,11 +61,10 @@ class GitFolder extends GitBase {
       output("$this->folder: no remotes");
       return;
     }
-    output("$this->folder: started");
+    output("$this->folder: started. Remotes: ".implode(', ', $remotes));
     print `git add .`;
     print `git commit -am "Auto push from {$this->server['baseDomain']}"`;
     foreach ($remotes as $remote) {
-      if (in_array($remote, $remoteFilter)) continue;
       output("--------- Process remote '$remote'");
       $this->shellexec("git pull $remote {$this->server['branch']}");
       $this->shellexec("git push $remote {$this->server['branch']}");
