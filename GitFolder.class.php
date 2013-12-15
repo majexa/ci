@@ -57,7 +57,6 @@ class GitFolder extends GitBase {
 
   function push($remoteFilter = []) {
     if ($remoteFilter) $remoteFilter = (array)$remoteFilter;
-    //die2([$this->getRemotes(), $remoteFilter]);
     if (!($remotes = array_intersect($this->getRemotes(), $remoteFilter))) {
       output("$this->folder: no remotes");
       return;
@@ -67,7 +66,7 @@ class GitFolder extends GitBase {
     print `git commit -am "Auto push from {$this->server['baseDomain']}"`;
     foreach ($remotes as $remote) {
       if (in_array($remote, $remoteFilter)) continue;
-      output("Process remote '$remote'");
+      output("--------- Process remote '$remote'");
       $this->shellexec("git pull $remote {$this->server['branch']}");
       $this->shellexec("git push $remote {$this->server['branch']}");
     }
