@@ -58,11 +58,18 @@ class GitFolder extends GitBase {
   function push($remoteFilter = []) {
     if ($remoteFilter) $remoteFilter = (array)$remoteFilter;
     $folder = basename($this->folder);
-    if (!($remotes = array_intersect($this->getRemotes(), $remoteFilter))) {
+    $_remotes = $this->getRemotes();
+    if ($remoteFilter and !($remotes = array_intersect($_remotes, $remoteFilter))) {
       output("$folder: no remotes");
       return;
+    } else {
+      $remotes = $_remotes;
     }
     output("$folder: started. Remotes: ".implode(', ', $remotes));
+    if (!$this->hasChanges($remotes)) {
+      output("$folder: no changes");
+      return;
+    }
     print `git add .`;
     print `git commit -am "Auto push from {$this->server['baseDomain']}"`;
     foreach ($remotes as $remote) {
@@ -70,6 +77,11 @@ class GitFolder extends GitBase {
       $this->shellexec("git pull $remote {$this->server['branch']}");
       $this->shellexec("git push $remote {$this->server['branch']}");
     }
+  }
+
+  protected function hasChanges(array $remotes) {
+    foreach ($remotes as $remote) if ($this->wdRev() != $this->repoRev($remote)) return true;
+    return false;
   }
 
   function release() {
