@@ -65,7 +65,7 @@ class GitFolder extends GitBase {
     } else {
       $remotes = $_remotes;
     }
-    output("$folder: started. Remotes: ".implode(', ', $remotes));
+    output("$folder: started. Remotes: ".implode(', ', $remotes).' ------------------------------');
     print `git add .`;
     print `git commit -am "Commit was made from server {$this->server['maintainer']}/{$this->server['baseDomain']} by ci/push"`;
     if (!$this->hasChanges($remotes)) {
@@ -73,7 +73,7 @@ class GitFolder extends GitBase {
       return;
     }
     foreach ($remotes as $remote) {
-      output("$folder: process remote '$remote' ------------------------------");
+      output("$folder: process remote '$remote'");
       $this->shellexec("git pull $remote {$this->server['branch']}");
       $this->shellexec("git push $remote {$this->server['branch']}");
     }
