@@ -134,6 +134,10 @@ class Ci extends GitBase {
     $cron .= $this->shellexec('php /home/user/ngn-env/pm/pm.php localProjects cron');
     if ($this->server['sType'] != 'prod') $cron .= "15 1 * * * php /home/user/ngn-env/ci/update\n"; // 01:15
     $currentCron = $this->shellexec("crontab -l");
+    if (strstr($currentCron, 'no crontab')) {
+      output('no cron');
+      return;
+    }
     if ($cron and $cron != $currentCron) {
       file_put_contents('/tmp/.crontab', $cron);
       print $this->shellexec("crontab /tmp/.crontab");
