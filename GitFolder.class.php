@@ -63,7 +63,7 @@ class GitFolder extends GitBase {
       output("$folder: no remotes".($remoteFilter ? '. Filter: '.implode(', ', $remoteFilter) : ''));
       return;
     }
-    output("---- $folder: started. Remotes: ".implode(', ', $remotes));
+    output("---- $folder: try to add and commit. Remotes: ".implode(', ', $remotes));
     print `git add .`;
     $r = `git commit -am "Commit was made from server {$this->server['maintainer']}/{$this->server['baseDomain']} by ci/push"`;
     if (strstr($r, 'nothing to commit')) {
