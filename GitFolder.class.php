@@ -60,7 +60,7 @@ class GitFolder extends GitBase {
     $folder = basename($this->folder);
     $_remotes = $this->getRemotes();
     if ($remoteFilter and !($remotes = array_intersect($_remotes, $remoteFilter))) {
-      output("$folder: no remotes");
+      output("$folder: no remotes".($remoteFilter ? '. Filter: '.implode(', ', $remoteFilter) : ''));
       return;
     } else {
       $remotes = $_remotes;
