@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Continuous integration system
+ * Continuous integration system//
  */
 class Ci extends GitBase {
 
