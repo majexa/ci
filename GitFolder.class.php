@@ -58,12 +58,10 @@ class GitFolder extends GitBase {
   function push($remoteFilter = []) {
     if ($remoteFilter) $remoteFilter = (array)$remoteFilter;
     $folder = basename($this->folder);
-    $_remotes = $this->getRemotes();
-    if ($remoteFilter and !($remotes = array_intersect($_remotes, $remoteFilter))) {
+    $remotes = array_intersect($this->getRemotes(), $remoteFilter);
+    if ($remoteFilter and !$remotes) {
       output("$folder: no remotes".($remoteFilter ? '. Filter: '.implode(', ', $remoteFilter) : ''));
       return;
-    } else {
-      $remotes = $_remotes;
     }
     output("---- $folder: started. Remotes: ".implode(', ', $remotes));
     print `git add .`;
