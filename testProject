@@ -1,5 +1,5 @@
 if [ ! -d ../projects/test ]; then
-  php ../pm/pm.php localProject delete test
+  php ../pm/pm.php localServer deleteProject test
   php ../pm/pm.php localServer createProject test test.projects1.majexa.ru common
   php ../pm/pm.php localProject replaceConstant test core IS_DEBUG true
 fi

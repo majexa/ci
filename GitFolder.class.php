@@ -58,12 +58,13 @@ class GitFolder extends GitBase {
   function push($remoteFilter = []) {
     if ($remoteFilter) $remoteFilter = (array)$remoteFilter;
     $folder = basename($this->folder);
-    $remotes = array_intersect($this->getRemotes(), $remoteFilter);
-    if ($remoteFilter and !$remotes) {
+    $remotes = $this->getRemotes();
+    if ($remoteFilter) $remotes = array_intersect($remotes, $remoteFilter);
+    if (!$remotes) {
       output("$folder: no remotes".($remoteFilter ? '. Filter: '.implode(', ', $remoteFilter) : ''));
       return;
     }
-    output("---- $folder: try to add and commit. Remotes: ".implode(', ', $remotes));
+    output("$folder: try to add and commit. Remotes: ".implode(', ', $remotes));
     print `git add .`;
     $r = `git commit -am "Commit was made from server {$this->server['maintainer']}/{$this->server['baseDomain']} by ci/push"`;
     if (strstr($r, 'nothing to commit')) {
