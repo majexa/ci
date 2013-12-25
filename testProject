@@ -1,6 +1,6 @@
 if [ ! -d ../projects/test ]; then
   php ../pm/pm.php localServer deleteProject test
-  php ../pm/pm.php localServer createProject test test.projects1.majexa.ru common
+  php ../pm/pm.php localServer createProject test default common
   php ../pm/pm.php localProject replaceConstant test core IS_DEBUG true
 fi
-php ../run/site.php test "(new ProjectTestRunner(['$1']))->global()" $2
+php ../run/site.php test "(new ProjectTestRunner('$1'))->global()" $2
