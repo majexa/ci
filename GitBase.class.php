@@ -40,7 +40,7 @@ class GitBase {
 
   protected $errorsText = '';
 
-  protected function shellexec($cmd, $output = false) {
+  protected function shellexec($cmd, $output = true) {
     $r = Cli::shell($cmd, $output);
     // if (preg_match('/(?<!all)error/i', $r) or preg_match('/fatal/i', $r)) throw new Exception("Problems while running cmd '$cmd':\n$r");
     if (preg_match('/(?<!all)error/i', $r) or preg_match('/fatal/i', $r)) $this->errorsText .= $r;
