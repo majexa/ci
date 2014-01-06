@@ -66,7 +66,7 @@ class GitFolder extends GitBase {
     }
     output("$folder: try to add and commit. Remotes: ".implode(', ', $remotes));
     print `git add .`;
-    $r = `git commit -am "Commit was made from server {$this->server['maintainer']}/{$this->server['baseDomain']} by ci/push"`;
+    $r = `git commit -am "Commit was made from server {$this->server['baseDomain']} by ci/push"`;
     if (strstr($r, 'nothing to commit')) {
       output("$folder: nothing to commit");
       return;
