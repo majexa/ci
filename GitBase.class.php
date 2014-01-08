@@ -42,7 +42,6 @@ class GitBase {
 
   protected function shellexec($cmd, $output = true) {
     $r = Cli::shell($cmd, $output);
-    // if (preg_match('/(?<!all)error/i', $r) or preg_match('/fatal/i', $r)) throw new Exception("Problems while running cmd '$cmd':\n$r");
     if (preg_match('/(?<!all)error/i', $r) or preg_match('/fatal/i', $r)) $this->errorsText .= $r;
     return $r;
   }
@@ -53,19 +52,6 @@ class GitBase {
 
   protected function repoRev($remote) {
     return trim($this->shellexec("git rev-parse refs/remotes/$remote/master", false));
-  }
-
-  /**
-   * Возвращает имя ветви текущего рабочего каталога
-   *
-   * @return string
-   * @throws Exception
-   */
-  protected function wdBranch_old() {
-    foreach (explode("\n", `git branch`) as $branch) {
-      if (strstr($branch, '* ')) return str_replace('* ', '', $branch);
-    }
-    throw new Exception("Something wrong");
   }
 
   /**

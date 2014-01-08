@@ -56,12 +56,13 @@ class GitFolder extends GitBase {
   }
 
   function push($remoteFilter = []) {
+    //prr($this->folder);
     if ($remoteFilter) $remoteFilter = (array)$remoteFilter;
     $folder = basename($this->folder);
-    $remotes = $this->getRemotes();//
+    $remotes = $this->getRemotes();
     if ($remoteFilter) $remotes = array_intersect($remotes, $remoteFilter);
     if (!$remotes) {
-      output("$folder: no remotes".($remoteFilter ? '. Filter: '.implode(', ', $remoteFilter) : ''));
+      output("$folder: skepped. no remotes".($remoteFilter ? '. Filter: '.implode(', ', $remoteFilter) : ''));
       return;
     }
     output("$folder: try to add and commit. Remotes: ".implode(', ', $remotes));
