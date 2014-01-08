@@ -131,7 +131,7 @@ class Ci extends GitBase {
   function updateCron() {
     $cron = '';
     foreach ($this->findCronFiles() as $file) $cron .= trim(file_get_contents($file))."\n";
-    $cron .= $this->shellexec('php ~/ngn-env/pm/pm.php localProjects cron');
+    if (file_exists(NGN_ENV_PATH.'/pm')) $cron .= $this->shellexec('php ~/ngn-env/pm/pm.php localProjects cron');
     if ($this->server['sType'] != 'prod') $cron .= "15 1 * * * php ~/ngn-env/ci/update\n"; // 01:15
     $currentCron = $this->shellexec("crontab -l");
     if ($cron and $cron != $currentCron) {
