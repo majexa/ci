@@ -56,7 +56,6 @@ class GitFolder extends GitBase {
   }
 
   function push($remoteFilter = []) {
-    //prr($this->folder);
     if ($remoteFilter) $remoteFilter = (array)$remoteFilter;
     $folder = basename($this->folder);
     $remotes = $this->getRemotes();
@@ -72,19 +71,20 @@ class GitFolder extends GitBase {
       output("$folder: nothing to commit");
       return;
     }
-    if (!$this->hasChanges($remotes)) {
-      output("$folder: no changes");
+    $branch = $this->wdBranch();
+    if (!$this->hasChanges($remotes, $branch)) {
+      output("$folder ($branch): no changes");
       return;
     }
     foreach ($remotes as $remote) {
       output("$folder: process remote '$remote'");
-      $this->shellexec("git pull $remote {$this->server['branch']}");
-      $this->shellexec("git push $remote {$this->server['branch']}");
+      $this->shellexec("git pull $remote $branch");
+      $this->shellexec("git push $remote $branch");
     }
   }
 
-  protected function hasChanges(array $remotes) {
-    foreach ($remotes as $remote) if ($this->wdRev() != $this->repoRev($remote)) return true;
+  protected function hasChanges(array $remotes, $branch) {
+    foreach ($remotes as $remote) if ($this->wdRev($branch) != $this->repoRev($remote, $branch)) return true;
     return false;
   }
 
