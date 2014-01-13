@@ -135,8 +135,8 @@ class Ci extends GitBase {
     if ($this->server['sType'] != 'prod') $cron .= "15 1 * * * php ~/ngn-env/ci/update\n"; // 01:15
     $currentCron = $this->shellexec("crontab -l");
     if ($cron and $cron != $currentCron) {
-      file_put_contents('/tmp/.crontab', $cron);
-      print $this->shellexec("crontab /tmp/.crontab");
+      file_put_contents(__DIR__.'/temp/.crontab', $cron);
+      print $this->shellexec("crontab ".__DIR__."/temp/.crontab");
     }
   }
 
