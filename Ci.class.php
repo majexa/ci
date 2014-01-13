@@ -75,7 +75,7 @@ class Ci extends GitBase {
     foreach (glob(NGN_ENV_PATH.'/projects/*', GLOB_ONLYDIR) as $f) {
       if (!is_dir("$f/.git")) continue;
       $project = basename($f);
-      $this->runTest('php site.php '.$project.' "(new ProjectTestRunner)->local()"'); // project level specific tests. on project $project
+      $this->runTest('php site.php '.$project.' "(new ProjectTestRunner)->local(false)"'); // project level specific tests. on project $project
     }
   }
 
@@ -103,9 +103,9 @@ class Ci extends GitBase {
   }
 
   protected function restart() {
-    if ($this->updatedFolders or $this->forceParam == 'update') {
-      $this->shellexec('php /home/user/ngn-env/pm/pm.php localProjects restart');
-    }
+    //if ($this->updatedFolders or $this->forceParam == 'update') {
+    $this->shellexec('php /home/user/ngn-env/pm/pm.php localProjects restart');
+    //}
   }
 
   protected function clear() {
@@ -145,7 +145,7 @@ class Ci extends GitBase {
   }
 
   function run() {
-    $this->update();
+    if ($this->forceParam != 'test') $this->update();
     $this->clear();
     $this->restart();
     $this->updateCron();
