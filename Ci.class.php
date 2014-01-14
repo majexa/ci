@@ -63,6 +63,7 @@ class Ci extends GitBase {
   }
 
   protected function runProjectsTests() {
+    output('run Projects Tests');
     if (!file_exists(NGN_ENV_PATH.'/projects')) return;
     $domain = 'test.'.$this->server['baseDomain'];
     chdir(dirname(__DIR__).'/pm');
