@@ -12,8 +12,10 @@ class Ci extends GitBase {
     $this->forceParam = $forceParam;
   }
 
-  protected $updatedFolders = [];
+  protected $updatedFolders = [], $effectedTests = [];
   protected $isChanges = false;
+
+  static $delimiter = "\n===================\n";
 
   protected function update() {
     if (!($folders = $this->findGitFolders())) {
@@ -30,13 +32,14 @@ class Ci extends GitBase {
       }
     }
     if ($this->updatedFolders) {
-      $this->commonMailText = "Deploy by Continuous integration system at ".date('d.m.Y H:i:s')."\nUpdated folders:\n".implode("\n", $this->updatedFolders)."\n===================\n\n";
+      $this->commonMailText = "Deploy by Continuous integration system at ".date('d.m.Y H:i:s')."\nUpdated folders:\n".implode("\n", $this->updatedFolders).self::$delimiter;
     }
   }
 
   protected function runTest($cmd) {
     $testResult = $this->shellexec($cmd);
     if (strstr($testResult, 'FAILURES!') or strstr($testResult, 'Fatal error') or strstr($testResult, 'fault')) $this->errorsText .= $testResult;
+    if (preg_match('/<running tests: (.*)>/', $testResult, $m)) array_merge($this->$effectedTests, Misc::quoted2arr($m[1]));
   }
 
   protected $commonMailText = '';
@@ -96,6 +99,7 @@ class Ci extends GitBase {
     }
     else {
       if ($this->commonMailText) {
+        if ($this->$effectedTests) $this->commonMailText .= 'Effected tests: '.implode(', ', $this->$effectedTests).self::$delimiter;
         $this->commonMailText .= "complete successful";
         (new SendEmail)->send('masted311@gmail.com', "Deploy results on {$this->server['baseDomain']}", $this->commonMailText, false);
       }
