@@ -36,10 +36,17 @@ class Ci extends GitBase {
     }
   }
 
-  protected function runTest($cmd, $runInitPath = '') {
+  protected function runTest($cmd, $param = '') {
     if (getcwd() != NGN_ENV_PATH.'/run') chdir(NGN_ENV_PATH.'/run');
-    if ($runInitPath) $runInitPath = ' '.$runInitPath;
-    $testResult = $this->shellexec("php run.php \"$cmd\"$runInitPath");
+    $runInitPath = '';
+    if (strstr($cmd, 'ProjectTestRunner')) {
+      $runner = 'site.php '.($param ? : 'test');
+    }
+    else {
+      if ($param) $runInitPath = ' '.$param;
+      $runner = 'run.php';
+    }
+    $testResult = $this->shellexec("php $runner \"$cmd\"$runInitPath");
     if (strstr($testResult, 'FAILURES!') or strstr($testResult, 'Fatal error') or strstr($testResult, 'fault')) $this->errorsText .= $testResult;
     if (preg_match('/<running tests: (.*)>/', $testResult, $m)) array_merge($this->effectedTests, Misc::quoted2arr($m[1]));
   }
@@ -64,21 +71,21 @@ class Ci extends GitBase {
     }
   }
 
-  protected function runProjectsTests() {
+  function runProjectsTests() {
     if (!file_exists(NGN_ENV_PATH.'/projects')) return;
     output('Running projects tests');
     $domain = 'test.'.$this->server['baseDomain'];
     chdir(dirname(__DIR__).'/pm');
     $this->shellexec("php pm.php localServer createProject test $domain common");
     chdir(dirname(__DIR__).'/run');
-    $this->runTest('php site.php test "(new ProjectTestRunner)->global()"');
+    $this->runTest('(new ProjectTestRunner)->global()');
     chdir(dirname(__DIR__).'/pm');
     $this->shellexec('php pm.php localProject delete test');
     chdir(dirname(__DIR__).'/run');
     foreach (glob(NGN_ENV_PATH.'/projects/*', GLOB_ONLYDIR) as $f) {
       if (!is_dir("$f/.git")) continue;
       $project = basename($f);
-      $this->runTest('php site.php '.$project.' "(new ProjectTestRunner)->local(false)"'); // project level specific tests. on project $project
+      $this->runTest('(new ProjectTestRunner)->local(false)', $project); // project level specific tests. on project $project
     }
   }
 
@@ -92,7 +99,7 @@ class Ci extends GitBase {
   }
 
   protected function sendResults() {
-    if ($this->errorsText) {//
+    if ($this->errorsText) { //
       (new SendEmail)->send('masted311@gmail.com', "Errors on {$this->server['baseDomain']}", '<pre>'.$this->commonMailText.$this->errorsText.'</pre>');
       print $this->errorsText;
     }
