@@ -6,14 +6,14 @@
 class Ci extends GitBase {
 
   protected $forceParam;
+  protected $updatedFolders = [], $effectedTests = [];
+  protected $isChanges = false;
+  protected $commonMailText = '';
 
   function __construct($forceParam = null) {
     parent::__construct();
     $this->forceParam = $forceParam;
   }
-
-  protected $updatedFolders = [], $effectedTests = [];
-  protected $isChanges = false;
 
   static $delimiter = "\n===================\n";
 
@@ -36,38 +36,37 @@ class Ci extends GitBase {
     }
   }
 
-  protected function runTest($cmd) {
-    $testResult = $this->shellexec($cmd);
+  protected function runTest($cmd, $runInitPath = '') {
+    if (getcwd() != NGN_ENV_PATH.'/run') chdir(NGN_ENV_PATH.'/run');
+    if ($runInitPath) $runInitPath = ' '.$runInitPath;
+    $testResult = $this->shellexec("php run.php \"$cmd\"$runInitPath");
     if (strstr($testResult, 'FAILURES!') or strstr($testResult, 'Fatal error') or strstr($testResult, 'fault')) $this->errorsText .= $testResult;
-    if (preg_match('/<running tests: (.*)>/', $testResult, $m)) array_merge($this->$effectedTests, Misc::quoted2arr($m[1]));
+    if (preg_match('/<running tests: (.*)>/', $testResult, $m)) array_merge($this->effectedTests, Misc::quoted2arr($m[1]));
   }
-
-  protected $commonMailText = '';
 
   protected function _runTests() {
     if ($this->server['sType'] != 'prod') {
       $this->runProjectsTests();
-      chdir(NGN_ENV_PATH.'/run');
-      foreach (glob(NGN_ENV_PATH.'/*', GLOB_ONLYDIR) as $f) if (file_exists("$f/.ci")) {
-        $folderName = basename($f);
-        print `php ~/ngn-env/run/run.php "(new TestRunner)->local('$folderName')" $f`;
-      }
+      $this->runLibTests();
     }
-    if (file_exists(NGN_ENV_PATH.'/projects')) {
-      // Если это сервер с проектами
-      if ($this->server['sType'] == 'prod') {
-        // Для продакшена запускаем только эти тесты
-        $this->runTest('php run.php "(new TestRunner([\'projectsIndexAvailable\', \'allErrors\']))->global()"');
-      } else {
-        $this->runTest('php run.php "(new TestRunner)->global()"');
-      }
+    if (file_exists(NGN_ENV_PATH.'/projects') and $this->server['sType'] == 'prod') {
+      $this->runTest("(new TestRunner(['projectsIndexAvailable']))->global()");
     }
-    else $this->runTest('php run.php "(new TestRunner(\'allErrors\'))->global()"');
+    $this->runTest("(new TestRunner('allErrors'))->global()");
+  }
+
+  protected function runLibTests() {
+    foreach (glob(NGN_ENV_PATH.'/*', GLOB_ONLYDIR) as $f) {
+      if (!file_exists("$f/.ci")) continue;
+      $libFolder = file_exists("$f/lib") ? "$f/lib" : $f;
+      $runInitPath = file_exists("$f/init.php") ? "$f/init.php" : $libFolder;
+      $this->runTest("(new TestRunner)->local('$libFolder')", $runInitPath);
+    }
   }
 
   protected function runProjectsTests() {
-    output('run Projects Tests');
     if (!file_exists(NGN_ENV_PATH.'/projects')) return;
+    output('Running projects tests');
     $domain = 'test.'.$this->server['baseDomain'];
     chdir(dirname(__DIR__).'/pm');
     $this->shellexec("php pm.php localServer createProject test $domain common");
@@ -88,7 +87,7 @@ class Ci extends GitBase {
       $this->_runTests();
     }
     else {
-      output("no changes");
+      output("No changes");
     }
   }
 
@@ -99,11 +98,11 @@ class Ci extends GitBase {
     }
     else {
       if ($this->commonMailText) {
-        if ($this->$effectedTests) $this->commonMailText .= 'Effected tests: '.implode(', ', $this->$effectedTests).self::$delimiter;
-        $this->commonMailText .= "complete successful";
+        $this->commonMailText .= "Complete successful";
         (new SendEmail)->send('masted311@gmail.com', "Deploy results on {$this->server['baseDomain']}", $this->commonMailText, false);
       }
-      output("complete successful");
+      if ($this->effectedTests) $this->commonMailText .= 'Effected tests: '.implode(', ', $this->effectedTests).self::$delimiter;
+      output("Complete successful");
     }
   }
 
