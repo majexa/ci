@@ -54,7 +54,6 @@ class Ci extends GitBase {
   }
 
   protected function _runTests() {
-    $this->server['sType'] = 'prod';
     if ($this->server['sType'] != 'prod') {
       $this->runProjectsTests();
       $this->runLibTests();
