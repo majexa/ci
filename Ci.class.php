@@ -48,7 +48,9 @@ class Ci extends GitBase {
     }
     $testResult = $this->shellexec("php $runner \"$cmd\"$runInitPath");
     if (strstr($testResult, 'FAILURES!') or strstr($testResult, 'Fatal error') or strstr($testResult, 'fault')) $this->errorsText .= $testResult;
-    if (preg_match('/<running tests: (.*)>/', $testResult, $m)) array_merge($this->effectedTests, Misc::quoted2arr($m[1]));
+    if (preg_match('/<running tests: (.*)>/', $testResult, $m)) {
+      $this->effectedTests = array_merge($this->effectedTests, Misc::quoted2arr($m[1]));
+    }
   }
 
   protected function _runTests() {
