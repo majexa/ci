@@ -54,6 +54,7 @@ class Ci extends GitBase {
   }
 
   protected function _runTests() {
+    $this->server['sType'] = 'prod';
     if ($this->server['sType'] != 'prod') {
       $this->runProjectsTests();
       $this->runLibTests();
@@ -101,8 +102,9 @@ class Ci extends GitBase {
   }
 
   protected function sendResults() {
-    if ($this->errorsText) { //
-      (new SendEmail)->send('masted311@gmail.com', "Errors on {$this->server['baseDomain']}", '<pre>'.$this->commonMailText.$this->errorsText.'</pre>');
+    if ($this->effectedTests) $this->commonMailText .= 'Effected tests: '.implode(', ', $this->effectedTests).self::$delimiter;
+    if ($this->errorsText) {
+      (new SendEmail)->send('masted311@gmail.com', "Errors on {$this->server['baseDomain']}", $this->commonMailText.'<pre>'.$this->errorsText.'</pre>');
       print $this->errorsText;
     }
     else {
@@ -110,7 +112,6 @@ class Ci extends GitBase {
         $this->commonMailText .= "Complete successful";
         (new SendEmail)->send('masted311@gmail.com', "Deploy results on {$this->server['baseDomain']}", $this->commonMailText, false);
       }
-      if ($this->effectedTests) $this->commonMailText .= 'Effected tests: '.implode(', ', $this->effectedTests).self::$delimiter;
       output("Complete successful");
     }
   }
