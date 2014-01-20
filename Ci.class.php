@@ -39,8 +39,10 @@ class Ci extends GitBase {
   protected function runTest($cmd, $param = '') {
     if (getcwd() != NGN_ENV_PATH.'/run') chdir(NGN_ENV_PATH.'/run');
     $runInitPath = '';
+    $project = false;
     if (strstr($cmd, 'ProjectTestRunner')) {
       $runner = 'site.php '.($param ? : 'test');
+      $project = $param;
     }
     else {
       if ($param) $runInitPath = ' '.$param;
@@ -48,8 +50,11 @@ class Ci extends GitBase {
     }
     $testResult = $this->shellexec("php $runner \"$cmd\"$runInitPath");
     if (strstr($testResult, 'FAILURES!') or strstr($testResult, 'Fatal error') or strstr($testResult, 'fault')) $this->errorsText .= $testResult;
+    //prr($testResult);
     if (preg_match('/<running tests: (.*)>/', $testResult, $m)) {
-      $this->effectedTests = array_merge($this->effectedTests, Misc::quoted2arr($m[1]));
+      $tests = Misc::quoted2arr($m[1]);
+      if ($project) foreach ($tests as &$v) $v = "$v ($project)";
+      $this->effectedTests = array_merge($this->effectedTests, $tests);
     }
   }
 
@@ -84,6 +89,14 @@ class Ci extends GitBase {
     chdir(dirname(__DIR__).'/pm');
     $this->shellexec('php pm.php localProject delete test');
     chdir(dirname(__DIR__).'/run');
+    foreach (glob(NGN_ENV_PATH.'/projects/*', GLOB_ONLYDIR) as $f) {
+      if (!is_dir("$f/.git")) continue;
+      $project = basename($f);
+      $this->runTest('(new ProjectTestRunner)->local(false)', $project); // project level specific tests. on project $project
+    }
+  }
+
+  function _projectsTests() {
     foreach (glob(NGN_ENV_PATH.'/projects/*', GLOB_ONLYDIR) as $f) {
       if (!is_dir("$f/.git")) continue;
       $project = basename($f);
