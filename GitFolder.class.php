@@ -7,9 +7,12 @@ class GitFolder extends GitBase {
 
   protected $folder;
 
+  /**
+   * @param string Путь к git папке
+   */
   function __construct($folder) {
     parent::__construct();
-    $this->folder = $folder;
+    $this->folder = realpath($folder);
     chdir($this->folder);
   }
 
@@ -65,13 +68,10 @@ class GitFolder extends GitBase {
     output("$folder: try to add and commit. Remotes: ".implode(', ', $remotes));
     print `git add .`;
     $r = `git commit -am "Commit was made from server {$this->server['baseDomain']} by ci/push"`;
-    if (strstr($r, 'nothing to commit')) {
-      output("$folder: nothing to commit");
-      return;
-    }
+    $hasLocalChanges = strstr($r, 'nothing to commit');
     $branch = $this->wdBranch();
-    if (!$this->hasChanges($remotes, $branch)) {
-      output("$folder ($branch): no changes");
+    if (!$hasLocalChanges and !$this->hasChanges($remotes, $branch)) {
+      output("$folder ($branch): no changes remote and local changes");
       return;
     }
     foreach ($remotes as $remote) {
