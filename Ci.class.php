@@ -166,6 +166,29 @@ class Ci extends GitBase {
     }
   }
 
+  protected function findBinFiles() {
+    $files = [];
+    foreach ($this->paths as $path) {
+      foreach (glob("$path/*", GLOB_ONLYDIR) as $folder) {
+        if (($r = glob("$folder/*.bin"))) $files[] = $r[0];
+      }
+    }
+    return $files;
+  }
+
+  function updateBin() {
+    foreach ($this->findBinFiles() as $file) {
+      $newFile = '/usr/bin/'.Misc::removeSuffix('.bin', basename($file));
+      if (file_exists($newFile)) {
+        output("$newFile exists. Skipped");
+        continue;
+      }
+      output("Creating $newFile file");
+      print `sudo cp $file $newFile`;
+      print `sudo chmod +x $newFile`;
+    }
+  }
+
   function projectsCommand($action) {
     $this->shellexec("php /home/user/ngn-env/pm/pm.php localProjects $action");
   }
@@ -175,6 +198,7 @@ class Ci extends GitBase {
     $this->clear();
     $this->restart();
     $this->updateCron();
+    $this->updateBin();
     $this->runTests();
     $this->sendResults();
     chdir($this->cwd);
