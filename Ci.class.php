@@ -5,6 +5,14 @@
  */
 class Ci extends GitBase {
 
+  // CLI API
+
+  function update() {
+    $this->run();
+  }
+
+  // -------
+
   protected $forceParam;
   protected $updatedFolders = [], $effectedTests = [];
   protected $isChanges = false;
@@ -17,7 +25,7 @@ class Ci extends GitBase {
 
   static $delimiter = "\n===================\n";
 
-  protected function update() {
+  protected function _update() {
     if (!($folders = $this->findGitFolders())) {
       output("No git folders found");
       return;
@@ -50,7 +58,6 @@ class Ci extends GitBase {
     }
     $testResult = $this->shellexec("php $runner \"$cmd\"$runInitPath");
     if (strstr($testResult, 'FAILURES!') or strstr($testResult, 'Fatal error') or strstr($testResult, 'fault')) $this->errorsText .= $testResult;
-    //prr($testResult);
     if (preg_match('/<running tests: (.*)>/', $testResult, $m)) {
       $tests = Misc::quoted2arr($m[1]);
       if ($project) foreach ($tests as &$v) $v = "$v ($project)";
@@ -78,7 +85,7 @@ class Ci extends GitBase {
     }
   }
 
-  function runProjectsTests() {
+  protected function runProjectsTests() {
     if (!file_exists(NGN_ENV_PATH.'/projects')) return;
     output('Running projects tests');
     $domain = 'test.'.$this->server['baseDomain'];
@@ -96,6 +103,7 @@ class Ci extends GitBase {
     }
   }
 
+  /*
   function _projectsTests() {
     foreach (glob(NGN_ENV_PATH.'/projects/*', GLOB_ONLYDIR) as $f) {
       if (!is_dir("$f/.git")) continue;
@@ -103,6 +111,7 @@ class Ci extends GitBase {
       $this->runTest('(new ProjectTestRunner)->local(false)', $project); // project level specific tests. on project $project
     }
   }
+  */
 
   protected function runTests() {
     if (($this->updatedFolders and $this->forceParam != 'update') or $this->forceParam == 'test') {
@@ -180,8 +189,8 @@ class Ci extends GitBase {
     foreach ($this->findBinFiles() as $file) {
       $newFile = '/usr/bin/'.Misc::removeSuffix('.bin', basename($file));
       if (file_exists($newFile)) {
-        output("$newFile exists. Skipped");
-        continue;
+        //output("$newFile exists. Skipped");
+        //continue;
       }
       output("Creating $newFile file");
       print `sudo cp $file $newFile`;
@@ -189,11 +198,11 @@ class Ci extends GitBase {
     }
   }
 
-  function projectsCommand($action) {
+  protected function projectsCommand($action) {
     $this->shellexec("php /home/user/ngn-env/pm/pm.php localProjects $action");
   }
 
-  function run() {
+  protected function run() {
     if ($this->forceParam != 'test') $this->update();
     $this->clear();
     $this->restart();
