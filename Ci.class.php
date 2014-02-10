@@ -5,14 +5,6 @@
  */
 class Ci extends GitBase {
 
-  // CLI API
-
-  function update() {
-    $this->run();
-  }
-
-  // -------
-
   protected $forceParam;
   protected $updatedFolders = [], $effectedTests = [];
   protected $isChanges = false;
@@ -21,6 +13,10 @@ class Ci extends GitBase {
   function __construct($forceParam = null) {
     parent::__construct();
     $this->forceParam = $forceParam;
+  }
+
+  function update() {
+    $this->run();
   }
 
   static $delimiter = "\n===================\n";
@@ -71,9 +67,9 @@ class Ci extends GitBase {
       $this->runLibTests();
     }
     if (file_exists(NGN_ENV_PATH.'/projects') and $this->server['sType'] == 'prod') {
-      $this->runTest("(new TestRunner(['projectsIndexAvailable']))->global()");
+      $this->runTest("(new TestRunner(['projectsIndexAvailable']))->globl()");
     }
-    $this->runTest("(new TestRunner('allErrors'))->global()");
+    $this->runTest("(new TestRunner('allErrors'))->globl()");
   }
 
   protected function runLibTests() {
@@ -81,7 +77,7 @@ class Ci extends GitBase {
       if (!file_exists("$f/.ci")) continue;
       $libFolder = file_exists("$f/lib") ? "$f/lib" : $f;
       $runInitPath = file_exists("$f/init.php") ? "$f/init.php" : $libFolder;
-      $this->runTest("(new TestRunner)->local('$libFolder')", $runInitPath);
+      $this->runTest("(new TestRunner)->locl('$libFolder')", $runInitPath);
     }
   }
 
@@ -92,14 +88,14 @@ class Ci extends GitBase {
     chdir(dirname(__DIR__).'/pm');
     $this->shellexec("php pm.php localServer createProject test $domain common");
     chdir(dirname(__DIR__).'/run');
-    $this->runTest('(new ProjectTestRunner)->global()');
+    $this->runTest('(new ProjectTestRunner)->globl()');
     chdir(dirname(__DIR__).'/pm');
     $this->shellexec('php pm.php localProject delete test');
     chdir(dirname(__DIR__).'/run');
     foreach (glob(NGN_ENV_PATH.'/projects/*', GLOB_ONLYDIR) as $f) {
       if (!is_dir("$f/.git")) continue;
       $project = basename($f);
-      $this->runTest('(new ProjectTestRunner)->local(false)', $project); // project level specific tests. on project $project
+      $this->runTest('(new ProjectTestRunner)->locl(false)', $project); // project level specific tests. on project $project
     }
   }
 
@@ -108,7 +104,7 @@ class Ci extends GitBase {
     foreach (glob(NGN_ENV_PATH.'/projects/*', GLOB_ONLYDIR) as $f) {
       if (!is_dir("$f/.git")) continue;
       $project = basename($f);
-      $this->runTest('(new ProjectTestRunner)->local(false)', $project); // project level specific tests. on project $project
+      $this->runTest('(new ProjectTestRunner)->locl(false)', $project); // project level specific tests. on project $project
     }
   }
   */
@@ -203,7 +199,7 @@ class Ci extends GitBase {
   }
 
   protected function run() {
-    if ($this->forceParam != 'test') $this->update();
+    if ($this->forceParam != 'test') $this->_update();
     $this->clear();
     $this->restart();
     $this->updateCron();

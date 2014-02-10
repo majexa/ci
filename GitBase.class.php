@@ -31,7 +31,6 @@ class GitBase {
     foreach ($this->paths as $path) {
       foreach (glob("$path/*", GLOB_ONLYDIR) as $folder) {
         if (!is_dir("$folder/.git")) continue;
-        if (basename($folder) == 'run') continue;
         $folders[] = $folder;
       }
     }
