@@ -36,21 +36,6 @@ class GitFolder extends GitBase {
     return (bool)strstr($this->shellexec("git status"), '(working directory clean)');
   }
 
-  function start() {
-    $branch = $this->wdBranch();
-    if ($branch == $this->masterBranch and !$this->isClean()) {
-      print "U must cleanup working dir '$this->folder' first. Some changes presents in current local $this->masterBranch branch.\n";
-      return;
-    }
-    if ($branch == $this->server['branch']) {
-      print ("'$this->folder' are already on dev phase (branch {$this->server['branch']}).\n");
-      return;
-    }
-    print "Pulling '$this->folder' from $this->masterBranch branch.\n";
-    $this->shellexec("git pull origin $this->masterBranch");
-    $this->shellexec("git checkout -b {$this->server['branch']}");
-  }
-
   function update() {
     $this->shellexec("git pull origin $this->masterBranch");
     $this->shellexec("git pull origin {$this->server['branch']}");
@@ -84,15 +69,6 @@ class GitFolder extends GitBase {
   protected function hasChanges(array $remotes, $branch) {
     foreach ($remotes as $remote) if ($this->wdRev($branch) != $this->repoRev($remote, $branch)) return true;
     return false;
-  }
-
-  function release() {
-    print "Release '$this->folder' to $this->masterBranch branch\n";
-    print `git fetch origin -v`;
-    print `git checkout $this->masterBranch`;
-    //print `git merge {$this->server['branch']}`;
-    print `git push origin $this->masterBranch`;
-    //print `git branch --delete {$this->server['branch']}`;
   }
 
   function master() {

@@ -15,6 +15,9 @@ class Ci extends GitBase {
     $this->forceParam = $forceParam;
   }
 
+  /**
+   * Приводит систему к актуальному состоянию и проверяет всё ли в порядке
+   */
   function update() {
     $this->run();
   }
@@ -121,13 +124,15 @@ class Ci extends GitBase {
   protected function sendResults() {
     if ($this->effectedTests) $this->commonMailText .= 'Effected tests: '.implode(', ', $this->effectedTests).self::$delimiter;
     if ($this->errorsText) {
-      (new SendEmail)->send('masted311@gmail.com', "Errors on {$this->server['baseDomain']}", $this->commonMailText.'<pre>'.$this->errorsText.'</pre>');
+      if (!empty($this->server['maintainer'])) {
+        (new SendEmail)->send($this->server['maintainer'], "Errors on {$this->server['baseDomain']}", $this->commonMailText.'<pre>'.$this->errorsText.'</pre>');
+      }
       print $this->errorsText;
     }
     else {
-      if ($this->commonMailText) {
+      if (!empty($this->server['maintainer']) and $this->commonMailText) {
         $this->commonMailText .= "Complete successful";
-        (new SendEmail)->send('masted311@gmail.com', "Deploy results on {$this->server['baseDomain']}", $this->commonMailText, false);
+        (new SendEmail)->send($this->server['maintainer'], "Deploy results on {$this->server['baseDomain']}", $this->commonMailText, false);
       }
       output("Complete successful");
     }
@@ -159,6 +164,9 @@ class Ci extends GitBase {
     return $files;
   }
 
+  /**
+   * Собирает крон всеми имеющимися в системе методами и заменяет им крон текущего юзера
+   */
   function updateCron() {
     $cron = '';
     foreach ($this->findCronFiles() as $file) $cron .= trim(file_get_contents($file))."\n";
@@ -181,6 +189,9 @@ class Ci extends GitBase {
     return $files;
   }
 
+  /**
+   * Обновляет файлы быстрого запуска в /usr/bin/
+   */
   function updateBin() {
     foreach ($this->findBinFiles() as $file) {
       $newFile = '/usr/bin/'.Misc::removeSuffix('.bin', basename($file));
