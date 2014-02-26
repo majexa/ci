@@ -1,6 +1,0 @@
-if [ ! -d ../projects/test ]; then
-  php ../pm/pm.php localServer deleteProject test
-  php ../pm/pm.php localServer createProject test default common
-  php ../pm/pm.php localProject replaceConstant test core IS_DEBUG true
-fi
-php ../run/site.php test "(new TestRunnerProject('$1'))->globl()" $2

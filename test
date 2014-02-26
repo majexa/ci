@@ -1,1 +1,0 @@
-php ../run/run.php "(new Ci('test'))->update()" NGN_ENV_PATH/ci

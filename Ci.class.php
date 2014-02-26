@@ -205,9 +205,9 @@ class Ci extends GitBase {
   protected function run() {
     if ($this->forceParam != 'test') $this->_update();
     $this->clear();
-    $this->restart();
     $this->updateCron();
     $this->updateBin();
+    $this->restart();
     $this->runTests();
     $this->sendResults();
     chdir($this->cwd);

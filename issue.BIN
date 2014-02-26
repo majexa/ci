@@ -1,1 +1,0 @@
-php ~/ngn-env/run/run.php "new CliHelpArgsSingle('$*', new Issue)" NGN_ENV_PATH/ci
