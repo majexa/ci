@@ -18,6 +18,14 @@ class Ci extends GitBase {
   }
 
   /**
+   * Приводит систему к актуальному состоянию
+   */
+  function onlyUpdate() {
+    $this->forceParam = 'update';
+    $this->run();
+  }
+
+  /**
    * Тестирует систему
    */
   function test() {
@@ -119,13 +127,19 @@ class Ci extends GitBase {
     if ($this->errorsText) {
       if (!empty($this->server['maintainer'])) {
         (new SendEmail)->send($this->server['maintainer'], "Errors on {$this->server['baseDomain']}", $this->commonMailText.'<pre>'.$this->errorsText.'</pre>');
+      } else {
+        output("Email not sent. Set 'maintainer' in server config");
       }
       print $this->errorsText;
     }
     else {
-      if (!empty($this->server['maintainer']) and $this->commonMailText) {
-        $this->commonMailText .= "Complete successful";
-        (new SendEmail)->send($this->server['maintainer'], "Deploy results on {$this->server['baseDomain']}", $this->commonMailText, false);
+      if ($this->commonMailText) {
+        if (!empty($this->server['maintainer'])) {
+          $this->commonMailText .= "Complete successful";
+          (new SendEmail)->send($this->server['maintainer'], "Deploy results on {$this->server['baseDomain']}", $this->commonMailText, false);
+        } else {
+          output("Email not sent. Set 'maintainer' in server config");
+        }
       }
       output("Complete successful");
     }
@@ -205,12 +219,17 @@ class Ci extends GitBase {
   protected function run() {
     if ($this->forceParam != 'test') $this->_update();
     $this->clear();
-    $this->updateCron();
-    $this->updateBin();
-    $this->restart();
+    if (getOS() !== 'win') {
+      $this->updateCron();
+      $this->updateBin();
+      $this->restart();
+    }
     $this->runTests();
     $this->sendResults();
     chdir($this->cwd);
+  }
+
+  function checkout() {
   }
 
 }
