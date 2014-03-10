@@ -41,6 +41,7 @@ class Ci extends GitBase {
       return;
     }
     foreach ($folders as $folder) {
+      output2($folder);
       if ((new GitFolder($folder))->reset()) {
         output("$folder: updated");
         $this->updatedFolders[] = $folder;
@@ -229,7 +230,8 @@ class Ci extends GitBase {
     chdir($this->cwd);
   }
 
-  function checkout() {
+  function diff() {
+    //foreach ($this->findGitFolders() as $f) (new GitFolder($f))->;
   }
 
 }

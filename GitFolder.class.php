@@ -32,12 +32,13 @@ class GitFolder extends GitBase {
     return false;
   }
 
-  protected function isClean() {
-    return (bool)strstr($this->shellexec("git status"), 'working directory clean');
+  function isClean() {
+    return (bool)strstr($this->shellexec("git status", false), 'working directory clean');
   }
 
   function checkIsClean($message = 'Folder %s is not clear') {
     if (!$this->isClean()) {
+      print $this->shellexec("git status");
       throw new Exception(sprintf($message, $this->folder));
     }
   }
@@ -47,6 +48,9 @@ class GitFolder extends GitBase {
     $this->shellexec("git pull origin {$this->server['branch']}");
   }
 
+  /**
+   * Для текущей ветки делает add, commit, а так же pull, push для всех репозиториев
+   */
   function push($remoteFilter = []) {
     if ($remoteFilter) $remoteFilter = (array)$remoteFilter;
     $folder = basename($this->folder);
@@ -77,10 +81,12 @@ class GitFolder extends GitBase {
     return false;
   }
 
+  /*
   function master() {
     print `git fetch origin -v`;
     print `git checkout $this->masterBranch`;
     print `git reset --hard origin/$this->masterBranch`;
   }
+  */
 
 }
