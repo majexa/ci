@@ -14,23 +14,30 @@ class Ci extends GitBase {
    * Приводит систему к актуальному состоянию и тестирует её
    */
   function update() {
-    $this->run();
-  }
-
-  /**
-   * Приводит систему к актуальному состоянию
-   */
-  function onlyUpdate() {
-    $this->forceParam = 'update';
-    $this->run();
+    if ($this->forceParam != 'test') $this->_update();
+    $this->clear();
+    if (getOS() !== 'win') {
+      $this->updateCron();
+      $this->updateBin();
+      $this->restart();
+    }
+    $this->runTests();
+    $this->sendResults();
+    chdir($this->cwd);
   }
 
   /**
    * Тестирует систему
    */
   function test() {
-    $this->forceParam = 'test';
-    $this->run();
+    $this->runTests();
+  }
+
+  /**
+   * Приводит систему к актуальному состоянию
+   */
+  function onlyUpdate() {
+    $this->_update();
   }
 
   static $delimiter = "\n===================\n";
@@ -76,7 +83,7 @@ class Ci extends GitBase {
     }
   }
 
-  protected function _runTests() {
+  protected function runTests() {
     if ($this->server['sType'] != 'prod') {
       $this->runProjectsTests();
       $this->runLibTests();
@@ -114,6 +121,7 @@ class Ci extends GitBase {
     }
   }
 
+  /*
   protected function runTests() {
     if (($this->updatedFolders and $this->forceParam != 'update') or $this->forceParam == 'test') {
       $this->_runTests();
@@ -122,6 +130,7 @@ class Ci extends GitBase {
       output("No changes");
     }
   }
+  */
 
   protected function sendResults() {
     if ($this->effectedTests) $this->commonMailText .= 'Effected tests: '.implode(', ', $this->effectedTests).self::$delimiter;
@@ -223,23 +232,33 @@ class Ci extends GitBase {
     $this->shellexec("php /home/user/ngn-env/pm/pm.php localProjects $action");
   }
 
-  protected function run() {
-    if ($this->forceParam != 'test') $this->_update();
-    $this->clear();
-    if (getOS() !== 'win') {
-      $this->updateCron();
-      $this->updateBin();
-      $this->restart();
-    }
-    $this->runTests();
-    $this->sendResults();
-    chdir($this->cwd);
-  }
-
+  /**
+   * Отображает время и статус последнего апдейта системы
+   */
   function status() {
     if (!file_exists(__DIR__.'/.last.php')) return;
     $r = require __DIR__.'/.last.php';
     print date('d.m.Y H:i:s', $r['time']).': '.($r['success'] ? 'success' : 'failed')."\n";
+  }
+
+  /**
+   * Отображает активные ветки всех git-проектов
+   */
+  function branches() {
+    foreach ($this->findGitFolders() as $folder) {
+      print '* '.basename($folder).":\t\t\t".(new GitFolder($folder))->wdBranch()."\n";
+    }
+  }
+
+  /**
+   * Показывает git-проекты, нуждающиеся в пуше или пуле
+   */
+  function changed() {
+    foreach ($this->findGitFolders() as $folder) {
+      if (!(new GitFolder($folder))->isClean()) {
+        print '* '.basename($folder)."\n";
+      }
+    }
   }
 
 }
