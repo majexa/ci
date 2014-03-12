@@ -62,6 +62,18 @@ class Ci extends GitBase {
     }
   }
 
+  function clean() {
+    if (!($folders = $this->findGitFolders())) {
+      output("No git folders found");
+      return;
+    }
+    foreach ($folders as $folder) {
+      output2($folder);
+      $f = (new GitFolder($folder));
+      print $f->shellexec('git clean -f -d');
+    }
+  }
+
   protected function runTest($cmd, $param = '') {
     if (getcwd() != NGN_ENV_PATH.'/run') chdir(NGN_ENV_PATH.'/run');
     $runInitPath = '';
