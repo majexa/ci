@@ -27,6 +27,7 @@ class GitFolder extends GitBase {
     if ($this->wdRev($branch) != $this->repoRev($remote, $branch)) {
       output("Resetting folder '{$this->folder}' to the HEAD of '$remote' remote");
       $this->shellexec("git reset --hard $remote/{$this->wdBranch()}");
+      print $this->shellexec('git clean -f -d');
       return true;
     }
     return false;
