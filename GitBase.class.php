@@ -26,10 +26,12 @@ class GitBase {
     ];
   }
 
-  protected function findGitFolders() {
+  protected function findGitFolders($filter = []) {
+    if ($filter) $filter = (array)$filter;
     $folders = [];
     foreach ($this->paths as $path) {
       foreach (glob("$path/*", GLOB_ONLYDIR) as $folder) {
+        if ($filter and !in_array(basename($folder), $filter)) continue;
         if (!is_dir("$folder/.git")) continue;
         $folders[] = $folder;
       }

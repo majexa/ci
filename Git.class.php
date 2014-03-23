@@ -6,7 +6,7 @@
  */
 class Git extends GitBase {
 
-  function __call($method, $args) {
+  function __call($method, $args = []) {
     foreach ($this->findGitFolders() as $folder) {
       call_user_func_array([$this->folder($folder), $method], $args);
     }

@@ -61,10 +61,14 @@ class GitFolder extends GitBase {
       output("$folder: skepped. no remotes".($remoteFilter ? '. Filter: '.implode(', ', $remoteFilter) : ''));
       return;
     }
-    output("$folder: try to add and commit. Remotes: ".implode(', ', $remotes));
-    print `git add .`;
-    $r = `git commit -am "Commit was made from server {$this->server['baseDomain']} by ci/push"`;
-    $hasLocalChanges = strstr($r, 'nothing to commit');
+    $hasLocalChanges = false;
+    if (!$this->isClean()) {
+      output("$folder: try to add and commit. Remotes: ".implode(', ', $remotes));
+      print `git add .`;
+      print `git commit -am "Commit was made from server {$this->server['baseDomain']} by ci/push"`;
+      $hasLocalChanges = true;
+    }
+    //$hasLocalChanges = strstr($r, 'nothing to commit');
     $branch = $this->wdBranch();
     if (!$hasLocalChanges and !$this->hasChanges($remotes, $branch)) {
       output("$folder ($branch): no changes remote and local changes");
