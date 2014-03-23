@@ -16,10 +16,6 @@ class GitFolder extends GitBase {
     chdir($this->folder);
   }
 
-  function setup() {
-    Cli::confirm('Are U shure?');
-  }
-
   function reset() {
     return $this->resetToRemote('origin');
   }
