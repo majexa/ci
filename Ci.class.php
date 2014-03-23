@@ -19,10 +19,8 @@ class Ci extends GitBase {
     if (getOS() !== 'win') {
       $this->updateCron();
       $this->updateBin();
-      $this->restart();
     }
     $this->runTests();
-    $this->sendResults();
     chdir($this->cwd);
   }
 
@@ -90,12 +88,13 @@ class Ci extends GitBase {
     if (strstr($testResult, 'FAILURES!') or strstr($testResult, 'Fatal error') or strstr($testResult, 'fault')) $this->errorsText .= $testResult;
     if (preg_match('/<running tests: (.*)>/', $testResult, $m)) {
       $tests = Misc::quoted2arr($m[1]);
-      if ($project) foreach ($tests as &$v) $v = "$v ($project)";
+      if ($project) foreach ($tests as &$v) $v = Misc::removePrefix('Test', $v)." ($project)";
       $this->effectedTests = array_merge($this->effectedTests, $tests);
     }
   }
 
   protected function runTests() {
+    // $this->restart();
     if ($this->server['sType'] != 'prod') {
       $this->runProjectsTests();
       $this->runLibTests();
@@ -104,6 +103,7 @@ class Ci extends GitBase {
       $this->runTest("(new TestRunnerNgn('projectsIndexAvailable'))->run()");
     }
     $this->runTest("(new TestRunnerNgn('allErrors'))->run()");
+    $this->sendResults();
   }
 
   protected function runLibTests() {
@@ -119,10 +119,8 @@ class Ci extends GitBase {
     if (!file_exists(NGN_ENV_PATH.'/projects')) return;
     output('Running projects tests');
     $domain = 'test.'.$this->server['baseDomain'];
-    chdir(dirname(__DIR__).'/pm');
-    $this->shellexec("php pm.php localServer createProject test $domain common");
-    chdir(dirname(__DIR__).'/run');
-    $this->runTest("(new TestRunnerProject('test'))->g()");
+    $this->shellexec("pm localServer createProject test $domain common");
+    $this->runTest("(new TestRunnerProject('test'))->g()", 'test');
     chdir(dirname(__DIR__).'/pm');
     $this->shellexec('php pm.php localProject delete test');
     chdir(dirname(__DIR__).'/run');
@@ -251,26 +249,6 @@ class Ci extends GitBase {
     if (!file_exists(__DIR__.'/.last.php')) return;
     $r = require __DIR__.'/.last.php';
     print date('d.m.Y H:i:s', $r['time']).': '.($r['success'] ? 'success' : 'failed')."\n";
-  }
-
-  /**
-   * Отображает активные ветки всех git-проектов
-   */
-  function branches() {
-    foreach ($this->findGitFolders() as $folder) {
-      print '* '.basename($folder).":\t\t\t".(new GitFolder($folder))->wdBranch()."\n";
-    }
-  }
-
-  /**
-   * Показывает git-проекты, нуждающиеся в пуше или пуле
-   */
-  function changed() {
-    foreach ($this->findGitFolders() as $folder) {
-      if (!(new GitFolder($folder))->isClean()) {
-        print '* '.basename($folder)."\n";
-      }
-    }
   }
 
 }
