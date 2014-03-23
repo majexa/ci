@@ -20,7 +20,7 @@ class Ci extends GitBase {
       $this->updateCron();
       $this->updateBin();
     }
-    $this->runTests();
+    //$this->runTests();
     chdir($this->cwd);
   }
 
