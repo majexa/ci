@@ -16,6 +16,7 @@ class Ci extends GitBase {
   function update() {
     if ($this->forceParam != 'test') $this->_update();
     $this->clear();
+    //if (DUMMY_PROJECT_CHANGED) $this->shellexec('php ~/ngn-env/pm/pm.php localProjects updateIndex');
     if (getOS() !== 'win') {
       $this->updateCron();
       $this->updateBin();
@@ -206,6 +207,7 @@ class Ci extends GitBase {
     if (file_exists(NGN_ENV_PATH.'/pm')) $cron .= $this->shellexec('php ~/ngn-env/pm/pm.php localProjects cron');
     if ($this->server['sType'] != 'prod') $cron .= "15 1 * * * php ~/ngn-env/ci/update\n"; // 01:15
     $currentCron = $this->shellexec("crontab -l");
+    Errors::checkText($cron);
     if ($cron and $cron != $currentCron) {
       file_put_contents(__DIR__.'/temp/.crontab', $cron);
       print $this->shellexec("crontab ".__DIR__."/temp/.crontab");
@@ -232,7 +234,7 @@ class Ci extends GitBase {
         //output("$newFile exists. Skipped");
         //continue;
       }
-      output("Creating $newFile file");
+      output("Creating '$newFile' from '$file'");
       print `sudo cp $file $newFile`;
       print `sudo chmod +x $newFile`;
     }
@@ -252,3 +254,5 @@ class Ci extends GitBase {
   }
 
 }
+
+// require ;
