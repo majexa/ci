@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Класс для управления версиями всех проектов на dev-сервере
+ * Популярные команды для работы с git-папками
  */
 class GitFolder extends GitBase {
 
@@ -70,7 +70,7 @@ class GitFolder extends GitBase {
     }
     //$hasLocalChanges = strstr($r, 'nothing to commit');
     $branch = $this->wdBranch();
-    if (!$hasLocalChanges and !$this->hasChanges($remotes, $branch)) {
+    if (!$hasLocalChanges and !$this->_hasChanges($remotes, $branch)) {
       output("$folder ($branch): no changes remote and local changes");
       return;
     }
@@ -81,9 +81,39 @@ class GitFolder extends GitBase {
     }
   }
 
-  protected function hasChanges(array $remotes, $branch) {
-    foreach ($remotes as $remote) if ($this->wdRev($branch) != $this->repoRev($remote, $branch)) return true;
+  function hasChanges($branch = null) {
+    if (!$branch) $branch = $this->wdBranch();
+    return $this->_hasChanges($this->getRemotes(), $branch);
+  }
+
+  function branchRemotes($branch) {
+
+  }
+
+  protected function _hasChanges(array $remotes, $branch) {
+    $remoteBranches = $this->remoteBranches();
+    foreach ($remotes as $remote) {
+      if (!in_array("$remote/$branch", $remoteBranches)) {
+        //output("'{$this->folder}' branch '$remote/$branch' does not exists. Skipped");
+        continue;
+      }
+      //die2([$remote, $this->wdRev($branch), $this->repoRev($remote, $branch)]);
+      if ($this->wdRev($branch) != $this->repoRev($remote, $branch)) return true;
+    }
     return false;
+  }
+
+  function getRemotes($branch = null) {
+    $r = [];
+    if ($branch) $remoteBranches = $this->remoteBranches();
+    foreach (parse_ini_file($this->folder.'/.git/config', true, INI_SCANNER_RAW) as $k => $v) {
+      if (Misc::hasPrefix('remote ', $k)) {
+        $remote = trim(Misc::removePrefix('remote ', $k), '"');
+        if ($branch and !in_array("$remote/$branch", $remoteBranches)) continue;
+        $r[] = $remote;
+      }
+    }
+    return $r;
   }
 
   /*
