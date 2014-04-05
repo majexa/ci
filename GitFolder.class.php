@@ -98,6 +98,7 @@ class GitFolder extends GitBase {
         continue;
       }
       //die2([$remote, $this->wdRev($branch), $this->repoRev($remote, $branch)]);
+      //output("\nwd rev: ".$this->wdRev($branch)."\nrepo rev: ".$this->repoRev($remote, $branch)."\nremote: $remote\nbranch: $branch");
       if ($this->wdRev($branch) != $this->repoRev($remote, $branch)) return true;
     }
     return false;
