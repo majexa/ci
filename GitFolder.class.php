@@ -49,6 +49,11 @@ class GitFolder extends GitBase {
     $this->shellexec("git pull origin {$this->server['branch']}");
   }
 
+  function commit() {
+    print `git add .`;
+    print `git commit -am "Commit was made from server {$this->server['baseDomain']} by ci/push"`;
+  }
+
   /**
    * Для текущей ветки делает add, commit, а так же pull, push для всех репозиториев
    */
@@ -63,9 +68,9 @@ class GitFolder extends GitBase {
     }
     $hasLocalChanges = false;
     if (!$this->isClean()) {
-      output("$folder: try to add and commit. Remotes: ".implode(', ', $remotes));
-      print `git add .`;
-      print `git commit -am "Commit was made from server {$this->server['baseDomain']} by ci/push"`;
+      //output("$folder: try to add and commit. Remotes: ".implode(', ', $remotes));
+      output("$folder: try to add and commit.");
+      $this->commit();
       $hasLocalChanges = true;
     }
     //$hasLocalChanges = strstr($r, 'nothing to commit');
