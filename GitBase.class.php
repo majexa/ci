@@ -7,15 +7,15 @@ class GitBase {
   function __construct() {
     if (file_exists(NGN_ENV_PATH.'/config/server.php')) {
       $this->server = require NGN_ENV_PATH.'/config/server.php';
-      Arr::checkEmpty($this->server, ['sType', 'baseDomain']);
+      Arr::checkEmpty($this->server, ['baseDomain']);
     }
     else {
       $this->server = [
-        'sType'      => 'dev',
         'branch'     => 'master',
         'baseDomain' => `hostname`,
       ];
     }
+    if (!isset($this->server['sType'])) $this->server['sType'] = 'dev';
     if (!isset($this->server['branch'])) $this->server['branch'] = 'master';
     $this->cwd = getcwd();
     $home = dirname(NGN_ENV_PATH);
