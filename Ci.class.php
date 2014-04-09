@@ -167,7 +167,7 @@ class Ci extends GitBase {
         }
       }
       $r['success'] = true;
-      output("Complete successful");
+      output("Complete successful. ".'Effected tests: '.implode(', ', $this->effectedTests));
     }
     FileVar::updateVar(__DIR__.'/.last.php', $r);
   }
