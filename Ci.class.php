@@ -23,6 +23,7 @@ class Ci extends GitBase {
       $this->updateBin();
     }
     //$this->runTests();
+    $this->updateStatus();
     chdir($this->cwd);
   }
 
@@ -146,16 +147,12 @@ class Ci extends GitBase {
 
   protected function sendResults() {
     if ($this->effectedTests) $this->commonMailText .= 'Effected tests: '.implode(', ', $this->effectedTests).self::$delimiter;
-    $r = [
-      'time' => time()
-    ];
     if ($this->errorsText) {
       if (!empty($this->server['maintainer'])) {
         (new SendEmail)->send($this->server['maintainer'], "Errors on {$this->server['baseDomain']}", $this->commonMailText.'<pre>'.$this->errorsText.'</pre>');
       } else {
         output("Email not sent. Set 'maintainer' in server config");
       }
-      $r['success'] = false;
       print $this->errorsText;
     }
     else {
@@ -167,10 +164,14 @@ class Ci extends GitBase {
           output("Email not sent. Set 'maintainer' in server config");
         }
       }
-      $r['success'] = true;
       output("Complete successful. ".'Effected tests: '.implode(', ', $this->effectedTests));
     }
-    FileVar::updateVar(__DIR__.'/.last.php', $r);
+  }
+
+  protected function updateStatus() {
+    $r = ['time' => time()];
+    $r['success'] = !(bool)$this->errorsText;
+    FileVar::updateVar(__DIR__.'/.status.php', $r);
   }
 
   protected function restart() {
@@ -251,8 +252,8 @@ class Ci extends GitBase {
    * Отображает время и статус последнего апдейта системы
    */
   function status() {
-    if (!file_exists(__DIR__.'/.last.php')) return;
-    $r = require __DIR__.'/.last.php';
+    if (!file_exists(__DIR__.'/.status.php')) return;
+    $r = require __DIR__.'/.status.php';
     print date('d.m.Y H:i:s', $r['time']).': '.($r['success'] ? 'success' : 'failed')."\n";
   }
 
