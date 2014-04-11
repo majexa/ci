@@ -18,6 +18,7 @@ class Ci extends GitBase {
     $this->clear();
     //if (DUMMY_PROJECT_CHANGED) $this->shellexec('php ~/ngn-env/pm/pm.php localProjects updateIndex');
     if (getOS() !== 'win') {
+      print `pm localProjects updateIndex`;
       $this->updateCron();
       $this->updateBin();
     }
@@ -206,7 +207,9 @@ class Ci extends GitBase {
     foreach ($this->findCronFiles() as $file) $cron .= trim(file_get_contents($file))."\n";
     if (file_exists(NGN_ENV_PATH.'/pm')) $cron .= $this->shellexec('php ~/ngn-env/pm/pm.php localProjects cron');
     if ($this->server['sType'] != 'prod') $cron .= "15 1 * * * php ~/ngn-env/ci/update\n"; // 01:15
+    //die2('!');
     $currentCron = $this->shellexec("crontab -l");
+
     Errors::checkText($cron);
     if ($cron and $cron != $currentCron) {
       file_put_contents(__DIR__.'/temp/.crontab', $cron);
