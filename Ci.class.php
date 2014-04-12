@@ -251,12 +251,31 @@ class Ci extends GitBase {
   /**
    * Отображает время и статус последнего апдейта системы
    */
-  function status() {
-    if (!file_exists(__DIR__.'/.status.php')) return;
-    $r = require __DIR__.'/.status.php';
-    print date('d.m.Y H:i:s', $r['time']).': '.($r['success'] ? 'success' : 'failed')."\n";
+  function info() {
+    if (file_exists(__DIR__.'/.status.php')) {
+      if (($r = require __DIR__.'/.status.php')) {
+        print date('d.m.Y H:i:s', $r['time']).': '.($r['success'] ? 'success' : 'failed')."\n";
+      }
+    }
+    if (file_exists(__DIR__.'/.packages.php')) {
+      if (($r = require __DIR__.'/.packages.php')) {
+        print 'Packages: '.implode(', ', $r)."\n";
+      }
+    }
+  }
+
+  function installPackages() {
+    if (($r = require __DIR__.'/.packages.php')) {
+      foreach ($r as $name) {
+        chdir(NGN_ENV_PATH);
+        if (file_exists(NGN_ENV_PATH."/$name")) {
+          output("Package $name exists. Skipped");
+          continue;
+        }
+        output("Cloning $name");
+        print `git clone https://github.com/masted/$name`;
+      }
+    }
   }
 
 }
-
-// require ;
