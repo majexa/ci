@@ -207,7 +207,7 @@ class Ci extends GitBase {
     $cron = '';
     foreach ($this->findCronFiles() as $file) $cron .= trim(file_get_contents($file))."\n";
     if (file_exists(NGN_ENV_PATH.'/pm')) $cron .= $this->shellexec('php ~/ngn-env/pm/pm.php localProjects cron');
-    if ($this->server['sType'] != 'prod') $cron .= "15 1 * * * php ~/ngn-env/ci/update\n"; // 01:15
+    if ($this->server['sType'] != 'prod') $cron .= "*/30 * * * * ci update\n"; // 01:15
     //die2('!');
     $currentCron = $this->shellexec("crontab -l");
 
@@ -251,12 +251,15 @@ class Ci extends GitBase {
   /**
    * Отображает время и статус последнего апдейта системы
    */
-  function info() {
+  function status() {
     if (file_exists(__DIR__.'/.status.php')) {
       if (($r = require __DIR__.'/.status.php')) {
         print date('d.m.Y H:i:s', $r['time']).': '.($r['success'] ? 'success' : 'failed')."\n";
       }
     }
+  }
+
+  function packages() {
     if (file_exists(__DIR__.'/.packages.php')) {
       if (($r = require __DIR__.'/.packages.php')) {
         print 'Packages: '.implode(', ', $r)."\n";
