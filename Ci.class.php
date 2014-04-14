@@ -49,13 +49,12 @@ class Ci extends GitBase {
       return;
     }
     foreach ($folders as $folder) {
-      output2($folder);
       if ((new GitFolder($folder))->reset()) {
         output("$folder: updated");
         $this->updatedFolders[] = $folder;
       }
       else {
-        output("$folder: no changes");
+        //output("$folder: no changes");
       }
     }
     if ($this->updatedFolders) {
@@ -233,12 +232,13 @@ class Ci extends GitBase {
    */
   function updateBin() {
     foreach ($this->findBinFiles() as $file) {
-      $newFile = '/usr/bin/'.Misc::removeSuffix('.bin', basename($file));
+      $name = Misc::removeSuffix('.bin', basename($file));
+      $newFile = '/usr/bin/'.$name;
       if (file_exists($newFile)) {
         //output("$newFile exists. Skipped");
         //continue;
       }
-      output("Creating '$newFile' from '$file'");
+      output2("command available: $name");
       print `sudo cp $file $newFile`;
       print `sudo chmod +x $newFile`;
     }
