@@ -44,6 +44,7 @@ class Ci extends GitBase {
   static $delimiter = "\n===================\n";
 
   protected function _update() {
+    $this->updateEnvPackages();
     if (!($folders = $this->findGitFolders())) {
       output("No git folders found");
       return;
@@ -53,12 +54,23 @@ class Ci extends GitBase {
         output("$folder: updated");
         $this->updatedFolders[] = $folder;
       }
-      else {
-        //output("$folder: no changes");
-      }
     }
     if ($this->updatedFolders) {
       $this->commonMailText = "Deploy by Continuous integration system at ".date('d.m.Y H:i:s')."\nUpdated folders:\n".implode("\n", $this->updatedFolders).self::$delimiter;
+    }
+  }
+
+  protected function updateEnvPackages() {
+    if (!isset($this->server['git'])) {
+      output('update env packages skiped. set server config "git" value');
+      return;
+    }
+    chdir(NGN_ENV_PATH);
+    foreach($this->getEnvPackages() as $package) {
+      if (!file_exists(NGN_ENV_PATH.'/'.$package)) {
+        output("cloning $package");
+        print `git clone {$this->server['git']}/$package`;
+      }
     }
   }
 
@@ -149,7 +161,8 @@ class Ci extends GitBase {
     if ($this->errorsText) {
       if (!empty($this->server['maintainer'])) {
         (new SendEmail)->send($this->server['maintainer'], "Errors on {$this->server['baseDomain']}", $this->commonMailText.'<pre>'.$this->errorsText.'</pre>');
-      } else {
+      }
+      else {
         output("Email not sent. Set 'maintainer' in server config");
       }
       print $this->errorsText;
@@ -159,7 +172,8 @@ class Ci extends GitBase {
         if (!empty($this->server['maintainer'])) {
           $this->commonMailText .= "Complete successful";
           (new SendEmail)->send($this->server['maintainer'], "Deploy results on {$this->server['baseDomain']}", $this->commonMailText, false);
-        } else {
+        }
+        else {
           output("Email not sent. Set 'maintainer' in server config");
         }
       }
@@ -259,11 +273,18 @@ class Ci extends GitBase {
     }
   }
 
-  function packages() {
+  protected function getEnvPackages() {
     if (file_exists(__DIR__.'/.packages.php')) {
-      if (($r = require __DIR__.'/.packages.php')) {
-        print 'Packages: '.implode(', ', $r)."\n";
-      }
+      return require __DIR__.'/.packages.php';
+    }
+    else {
+      return [];
+    }
+  }
+
+  function packages() {
+    if (($r = $this->getEnvPackages())) {
+      print 'Packages: '.implode(', ', $r)."\n";
     }
   }
 
