@@ -73,6 +73,19 @@ class Ci extends GitBase {
     }
   }
 
+  /**
+   * "git reset" для всех проектов
+   */
+  function reset() {
+    if (!($folders = $this->findGitFolders())) {
+      output("No git folders found");
+      return;
+    }
+    foreach ($folders as $folder) {
+      if ((new GitFolder($folder))->resetToRemote('origin', true)) output("$folder: reset");
+    }
+  }
+
   protected function updateEnvPackages() {
     if (!isset($this->server['git'])) {
       output('update env packages skiped. set server config "git" value');
