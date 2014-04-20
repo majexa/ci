@@ -31,7 +31,20 @@ class Ci extends GitBase {
    * Тестирует систему
    */
   function test() {
-    $this->runTests();
+    $this->runProjectsTests();
+    return;
+
+
+    // $this->restart();
+    if ($this->server['sType'] != 'prod') {
+      $this->runProjectsTests();
+      $this->runLibTests();
+    }
+    if (file_exists(NGN_ENV_PATH.'/projects') and $this->server['sType'] == 'prod') {
+      $this->runTest("(new TestRunnerNgn('projectsIndexAvailable'))->run()");
+    }
+    $this->runTest("(new TestRunnerNgn('allErrors'))->run()");
+    $this->sendResults();
   }
 
   /**
@@ -98,26 +111,15 @@ class Ci extends GitBase {
       if ($param) $runInitPath = ' '.$param;
       $runner = 'run.php';
     }
-    $testResult = $this->shellexec("php $runner \"$cmd\"$runInitPath");
+    $testResult = $this->shellexec("php $runner \"$cmd\"$runInitPath", true);
+    print "Test result:\n================\n$testResult\n================\n";
     if (strstr($testResult, 'FAILURES!') or strstr($testResult, 'Fatal error') or strstr($testResult, 'fault')) $this->errorsText .= $testResult;
     if (preg_match('/<running tests: (.*)>/', $testResult, $m)) {
       $tests = Misc::quoted2arr($m[1]);
+      // die2 ( $tests );
       if ($project) foreach ($tests as &$v) $v = Misc::removePrefix('Test', $v)." ($project)";
       $this->effectedTests = array_merge($this->effectedTests, $tests);
     }
-  }
-
-  protected function runTests() {
-    // $this->restart();
-    if ($this->server['sType'] != 'prod') {
-      $this->runProjectsTests();
-      $this->runLibTests();
-    }
-    if (file_exists(NGN_ENV_PATH.'/projects') and $this->server['sType'] == 'prod') {
-      $this->runTest("(new TestRunnerNgn('projectsIndexAvailable'))->run()");
-    }
-    $this->runTest("(new TestRunnerNgn('allErrors'))->run()");
-    $this->sendResults();
   }
 
   protected function runLibTests() {
@@ -141,7 +143,7 @@ class Ci extends GitBase {
     foreach (glob(NGN_ENV_PATH.'/projects/*', GLOB_ONLYDIR) as $f) {
       if (!is_dir("$f/.git")) continue;
       $project = basename($f);
-      $this->runTest("(new TestRunnerProject('$project'))->l()", $project); // project level specific tests. on project $project
+      $this->runTest("(new TestRunnerProject('$project'))->runLocal()", $project); // project level specific tests. on project $project
     }
   }
 
