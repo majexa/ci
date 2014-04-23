@@ -22,7 +22,7 @@ class Ci extends GitBase {
       $this->updateCron();
       $this->updateBin();
     }
-    //$this->runTests();
+    $this->test();
     $this->updateStatus();
     chdir($this->cwd);
   }
@@ -31,11 +31,7 @@ class Ci extends GitBase {
    * Тестирует систему
    */
   function test() {
-    $this->runProjectsTests();
-    return;
-
-
-    // $this->restart();
+    $this->restart();
     if ($this->server['sType'] != 'prod') {
       $this->runProjectsTests();
       $this->runLibTests();
