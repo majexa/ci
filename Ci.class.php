@@ -152,7 +152,7 @@ class Ci extends GitBase {
     foreach (glob(NGN_ENV_PATH.'/projects/*', GLOB_ONLYDIR) as $f) {
       if (!is_dir("$f/.git")) continue;
       $project = basename($f);
-      $this->runTest("(new TestRunnerProject('$project'))->runLocal()", $project); // project level specific tests. on project $project
+      $this->runTest("(new TestRunnerProject('$project'))->l()", $project); // project level specific tests. on project $project
     }
   }
 
