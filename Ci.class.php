@@ -242,31 +242,11 @@ class Ci extends GitBase {
     }
   }
 
-  protected function findBinFiles() {
-    $files = [];
-    foreach ($this->paths as $path) {
-      foreach (glob("$path/*", GLOB_ONLYDIR) as $folder) {
-        if (($fs = glob("$folder/*.bin"))) foreach ($fs as $f) $files[] = $f;
-      }
-    }
-    return $files;
-  }
-
   /**
    * Обновляет файлы быстрого запуска в /usr/bin/
    */
   function updateBin() {
-    foreach ($this->findBinFiles() as $file) {
-      $name = Misc::removeSuffix('.bin', basename($file));
-      $newFile = '/usr/bin/'.$name;
-      if (file_exists($newFile)) {
-        //output("$newFile exists. Skipped");
-        //continue;
-      }
-      output2("command available: $name");
-      print `sudo cp $file $newFile`;
-      print `sudo chmod +x $newFile`;
-    }
+    (new Bin($this->paths))->update();
   }
 
   protected function projectsCommand($action) {
