@@ -15,8 +15,6 @@ class Ci extends GitBase {
    */
   function update() {
     if ($this->forceParam != 'test') $this->_update();
-    $this->clear();
-    //if (DUMMY_PROJECT_CHANGED) $this->shellexec('php ~/ngn-env/pm/pm.php localProjects updateIndex');
     if (getOS() !== 'win') {
       print `pm localProjects updateIndex`;
       $this->updateCron();
@@ -31,6 +29,7 @@ class Ci extends GitBase {
    * Тестирует систему
    */
   function test() {
+    $this->clearErrors();
     $this->restart();
     if ($this->server['sType'] != 'prod') {
       $this->runProjectsTests();
@@ -96,6 +95,7 @@ class Ci extends GitBase {
     }
   }
 
+  /*
   function clean() {
     if (!($folders = $this->findGitFolders())) {
       output("No git folders found");
@@ -107,6 +107,7 @@ class Ci extends GitBase {
       print $f->shellexec('git clean -f -d');
     }
   }
+  */
 
   protected function runTest($cmd, $param = '') {
     if (getcwd() != NGN_ENV_PATH.'/run') chdir(NGN_ENV_PATH.'/run');
@@ -204,7 +205,7 @@ class Ci extends GitBase {
     //}
   }
 
-  protected function clear() {
+  protected function clearErrors() {
     chdir(dirname(__DIR__).'/run');
     Cli::shell('php run.php "(new AllErrors)->clear()"');
     if (file_exists(NGN_ENV_PATH.'/projects')) {
