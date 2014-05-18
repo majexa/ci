@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Continuous integration system//
+ * Continuous integration system
  */
 class Ci extends GitBase {
 
@@ -232,9 +232,7 @@ class Ci extends GitBase {
     foreach ($this->findCronFiles() as $file) $cron .= trim(file_get_contents($file))."\n";
     if (file_exists(NGN_ENV_PATH.'/pm')) $cron .= $this->shellexec('php ~/ngn-env/pm/pm.php localProjects cron');
     if ($this->server['sType'] != 'prod') $cron .= "0 2 * * * ci update\n"; // 01:15
-    //die2('!');
     $currentCron = $this->shellexec("crontab -l");
-
     Errors::checkText($cron);
     if ($cron and $cron != $currentCron) {
       file_put_contents(__DIR__.'/temp/.crontab', $cron);
