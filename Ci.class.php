@@ -246,6 +246,10 @@ class Ci extends GitBase {
    * Обновляет файлы быстрого запуска в /usr/bin/
    */
   function updateBin() {
+    print `sudo ci _updateBin`;
+  }
+
+  function _updateBin() {
     (new Bin($this->paths))->update();
   }
 
