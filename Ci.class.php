@@ -21,7 +21,6 @@ class Ci extends GitBase {
       $this->updateBin();
     }
     $this->test();
-    $this->updateStatus();
     chdir($this->cwd);
   }
 
@@ -40,6 +39,7 @@ class Ci extends GitBase {
     }
     $this->runTest("(new TestRunnerNgn('allErrors'))->run()");
     $this->sendResults();
+    $this->updateStatus();
   }
 
   /**
@@ -232,8 +232,9 @@ class Ci extends GitBase {
     $cron = '';
     foreach ($this->findCronFiles() as $file) $cron .= trim(file_get_contents($file))."\n";
     if (file_exists(NGN_ENV_PATH.'/pm')) $cron .= $this->shellexec('php ~/ngn-env/pm/pm.php localProjects cron');
-    if ($this->server['sType'] != 'prod') $cron .= "0 2 * * * ci update\n"; // 01:15
+    if ($this->server['sType'] != 'prod') $cron .= "0 2 * * * ci test\n"; // 01:15
     $currentCron = $this->shellexec("crontab -l");
+    print "CRON:\n=================\n".$currentCron;
     Errors::checkText($cron);
     if ($cron and $cron != $currentCron) {
       file_put_contents(__DIR__.'/temp/.crontab', $cron);
