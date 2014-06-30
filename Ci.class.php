@@ -283,6 +283,11 @@ class Ci extends GitBase {
     }
   }
 
+  function installPackage($name) {
+    chdir(NGN_ENV_PATH);
+    print `git clone https://github.com/masted/$name`;
+  }
+
   function installPackages() {
     if (($r = require __DIR__.'/.packages.php')) {
       foreach ($r as $name) {
