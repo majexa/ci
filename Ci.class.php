@@ -126,7 +126,6 @@ class Ci extends GitBase {
     if (strstr($testResult, 'FAILURES!') or strstr($testResult, 'Fatal error') or strstr($testResult, 'fault')) $this->errorsText .= $testResult;
     if (preg_match('/<running tests: (.*)>/', $testResult, $m)) {
       $tests = Misc::quoted2arr($m[1]);
-      // die2 ( $tests );
       if ($project) foreach ($tests as &$v) $v = Misc::removePrefix('Test', $v)." ($project)";
       $this->effectedTests = array_merge($this->effectedTests, $tests);
     }
@@ -156,17 +155,6 @@ class Ci extends GitBase {
       $this->runTest("(new TestRunnerProject('$project'))->l()", $project); // project level specific tests. on project $project
     }
   }
-
-  /*
-  protected function runTests() {
-    if (($this->updatedFolders and $this->forceParam != 'update') or $this->forceParam == 'test') {
-      $this->_runTests();
-    }
-    else {
-      output("No changes");
-    }
-  }
-  */
 
   protected function sendResults() {
     if ($this->effectedTests) $this->commonMailText .= 'Effected tests: '.implode(', ', $this->effectedTests).self::$delimiter;
@@ -200,9 +188,7 @@ class Ci extends GitBase {
   }
 
   protected function restart() {
-    //if ($this->updatedFolders or $this->forceParam == 'update') {
     $this->shellexec('php /home/user/ngn-env/pm/pm.php localProjects restart');
-    //}
   }
 
   protected function clearErrors() {
@@ -210,7 +196,6 @@ class Ci extends GitBase {
     Cli::shell('php run.php "(new AllErrors)->clear()"');
     if (file_exists(NGN_ENV_PATH.'/projects')) {
       $this->shellexec('php /home/user/ngn-env/pm/pm.php localProjects cc');
-      //print $this->shellexec('php /home/user/ngn-env/pm/pm.php localProjects patch');
     }
   }
 
