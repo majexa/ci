@@ -39,12 +39,8 @@ class GitBase {
     return $folders;
   }
 
-  protected $errorsText = '';
-
   protected function shellexec($cmd, $output = true) {
-    $r = Cli::shell($cmd, $output);
-    if (preg_match('/(?<!all)error/i', $r) or preg_match('/fatal/i', $r)) $this->errorsText .= $r;
-    return $r;
+    return Cli::shell($cmd, $output);
   }
 
   protected function wdRev($branch) {

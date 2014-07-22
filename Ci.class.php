@@ -123,12 +123,23 @@ class Ci extends GitBase {
     }
     $testResult = $this->shellexec("php $runner \"$cmd\"$runInitPath", true);
     print "Test result:\n================\n$testResult\n================\n";
-    if (strstr($testResult, 'FAILURES!') or strstr($testResult, 'Fatal error') or strstr($testResult, 'fault')) $this->errorsText .= $testResult;
+    if (strstr($testResult, 'FAILURES!')) $this->errors[] = [$testResult, '"FAILURES!" in test result'];
+    if (strstr($testResult, 'Fatal error')) $this->errors[] = [$testResult, '"Fatal error" in test result'];
+    //if (strstr($testResult, 'fault')) $this->errors[] = [$testResult, '"fault" in test result'];
     if (preg_match('/<running tests: (.*)>/', $testResult, $m)) {
       $tests = Misc::quoted2arr($m[1]);
       if ($project) foreach ($tests as &$v) $v = Misc::removePrefix('Test', $v)." ($project)";
       $this->effectedTests = array_merge($this->effectedTests, $tests);
     }
+  }
+
+  protected $errors = [];
+
+  protected function shellexec($cmd, $output = true) {
+    $r = Cli::shell($cmd, $output);
+    if (preg_match('/(?<!all)error/i', $r)) $this->errors[] = [$r, '"error" text in shell output of cmd: '.$cmd];
+    if (preg_match('/(?<!all)fatal/i', $r)) $this->errors[] = [$r, '"error" text in shell output of cmd: '.$cmd];
+    return $r;
   }
 
   protected function runLibTests() {
@@ -158,14 +169,16 @@ class Ci extends GitBase {
 
   protected function sendResults() {
     if ($this->effectedTests) $this->commonMailText .= 'Effected tests: '.implode(', ', $this->effectedTests).self::$delimiter;
-    if ($this->errorsText) {
+    if ($this->errors) {
+      $err = '';
+      foreach ($this->errors as $v) $err .= $v[0];
       if (!empty($this->server['maintainer'])) {
-        (new SendEmail)->send($this->server['maintainer'], "Errors on {$this->server['baseDomain']}", $this->commonMailText.'<pre>'.$this->errorsText.'</pre>');
+        (new SendEmail)->send($this->server['maintainer'], "Errors on {$this->server['baseDomain']}", $this->commonMailText.'<pre>'.$err.'</pre>');
       }
       else {
         output("Email not sent. Set 'maintainer' in server config");
       }
-      print $this->errorsText;
+      print $err;
     }
     else {
       if ($this->commonMailText) {
@@ -183,7 +196,7 @@ class Ci extends GitBase {
 
   protected function updateStatus() {
     $r = ['time' => time()];
-    $r['success'] = !(bool)$this->errorsText;
+    $r['success'] = count($this->errors);
     FileVar::updateVar(__DIR__.'/.status.php', $r);
   }
 
