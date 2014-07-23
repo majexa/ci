@@ -230,7 +230,7 @@ class Ci extends GitBase {
     $cron = '';
     foreach ($this->findCronFiles() as $file) $cron .= trim(file_get_contents($file))."\n";
     if (file_exists(NGN_ENV_PATH.'/pm')) $cron .= `pm localServer cron`;
-    if ($this->server['sType'] != 'prod') $cron .= "0 2 * * * ci test\n"; // 01:15
+    if ($this->server['sType'] != 'prod') $cron .= "46 10 * * * ci update\n";
     $currentCron = $this->shellexec("crontab -l");
     print "CRON:\n=================\n".$currentCron;
     Errors::checkText($cron);
