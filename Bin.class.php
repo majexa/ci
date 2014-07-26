@@ -2,7 +2,7 @@
 
 class Bin {
 
-  protected $paths, $binFolder = '/usr/local/bin';
+  protected $paths, $binFolder = '/usr/bin';
 
   function __construct(array $paths) {
     $this->paths = $paths;
@@ -14,24 +14,24 @@ class Bin {
     });
   }
 
-  protected function cleanup() {
-    $ngnBinFiles = $this->binFiles();
+  function remove() {
+    foreach ($this->binFiles() as $file) {
+      output("$file removed");
+      unlink($file);
+    }
+    /*
     $names = array_map(function($file) {
       return $this->name($file);
     }, $this->files());
     $nonExistingNgnBinFiles = array_filter(glob($this->binFolder.'/*'), function($file) use ($ngnBinFiles, $names) {
       return in_array($file, $ngnBinFiles) and !in_array(basename($file), $names);
     });
-    foreach ($nonExistingNgnBinFiles as $file) {
-      output("$file removed");
-      unlink($file);
-    }
+    */
   }
 
-  protected function fixSignature() {
+  protected function checkSignature() {
     foreach ($this->files() as $file) {
-      $c = file_get_contents($file);
-      if (!strstr($c, '# ngn')) file_put_contents($file, $c."\n# ngn");
+      if (!strstr(file_get_contents($file), '# ngn')) throw new Exception("File '$file' has no NGN signature");
     }
   }
 
@@ -63,8 +63,8 @@ class Bin {
   }
 
   function update() {
-    $this->fixSignature();
-    $this->cleanup();
+    $this->checkSignature();
+    $this->remove();
     $this->add();
   }
 

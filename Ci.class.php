@@ -230,25 +230,37 @@ class Ci extends GitBase {
     $cron = '';
     foreach ($this->findCronFiles() as $file) $cron .= trim(file_get_contents($file))."\n";
     if (file_exists(NGN_ENV_PATH.'/pm')) $cron .= `pm localServer cron`;
-    if ($this->server['sType'] != 'prod') $cron .= "46 10 * * * ci update\n";
-    $currentCron = $this->shellexec("crontab -l");
-    print "CRON:\n=================\n".$currentCron;
+    if ($this->server['sType'] != 'prod') $cron .= "30 4 * * * ci update >> /home/user/ngn-env/logs/cron 2>&1\n";
+    //$cron .= "* * * * * env > /home/user/ngn-env/logs/cron.env\n";
+    $currentCron = $this->shellexec("crontab -l", false);
     Errors::checkText($cron);
     if ($cron and $cron != $currentCron) {
       file_put_contents(__DIR__.'/temp/.crontab', $cron);
       print $this->shellexec("crontab ".__DIR__."/temp/.crontab");
+      print "cron updated:\n--------\n$cron";
     }
   }
 
   /**
-   * Обновляет файлы быстрого запуска в /usr/bin/
+   * Обновляет файлы быстрого запуска
    */
   function updateBin() {
     print `sudo ci _updateBin`;
   }
 
+  /**
+   * Удаляет файлы быстрого запуска
+   */
+  function removeBin() {
+    print `sudo ci _removeBin`;
+  }
+
   function _updateBin() {
     (new Bin($this->paths))->update();
+  }
+
+  protected function _removeBin() {
+    (new Bin($this->paths))->remove();
   }
 
   protected function projectsCommand($action) {
