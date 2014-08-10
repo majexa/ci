@@ -50,7 +50,7 @@ class GitFolder extends GitBase {
   }
 
   function commit() {
-    print `git add .`;
+    print `git add --all .`;
     print `git commit -am "Commit was made from server {$this->server['baseDomain']} by ci/push"`;
   }
 
