@@ -1,1 +1,2 @@
+# ngn
 php ~/ngn-env/run/run.php "new CliHelpArgsSingle('$*', new Ci)" ci

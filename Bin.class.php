@@ -2,10 +2,18 @@
 
 class Bin {
 
-  protected $paths, $binFolder = '/usr/bin';
+  /**
+   * Папка в которых нужно искать .bin файлы
+   *
+   * @var array
+   */
+  protected $paths;
+
+  protected $binFolder = '/usr/bin';
 
   function __construct(array $paths) {
     $this->paths = $paths;
+    $this->checkSignature();
   }
 
   protected function binFiles() {
@@ -63,7 +71,6 @@ class Bin {
   }
 
   function update() {
-    $this->checkSignature();
     $this->remove();
     $this->add();
   }
