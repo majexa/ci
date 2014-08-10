@@ -27,14 +27,6 @@ class Bin {
       output("$file removed");
       unlink($file);
     }
-    /*
-    $names = array_map(function($file) {
-      return $this->name($file);
-    }, $this->files());
-    $nonExistingNgnBinFiles = array_filter(glob($this->binFolder.'/*'), function($file) use ($ngnBinFiles, $names) {
-      return in_array($file, $ngnBinFiles) and !in_array(basename($file), $names);
-    });
-    */
   }
 
   protected function checkSignature() {
@@ -44,7 +36,7 @@ class Bin {
   }
 
   protected function name($file) {
-    return Misc::removeSuffix('.bin', basename($file));
+    return Misc::removeSuffix('.run', basename($file));
   }
 
   protected function add() {
@@ -64,7 +56,7 @@ class Bin {
     $files = [];
     foreach ($this->paths as $path) {
       foreach (glob("$path/*", GLOB_ONLYDIR) as $folder) {
-        if (($fs = glob("$folder/*.bin"))) foreach ($fs as $f) $files[] = $f;
+        if (($fs = glob("$folder/*.run"))) foreach ($fs as $f) $files[] = $f;
       }
     }
     return $files;
