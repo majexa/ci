@@ -109,27 +109,24 @@ class Ci extends GitBase {
   }
   */
 
-  protected function runTest($cmd, $param = '') {
+  protected function runTest($cmd, $project = null, $runInitPath = '') {
     if (getcwd() != NGN_ENV_PATH.'/run') chdir(NGN_ENV_PATH.'/run');
-    $runInitPath = '';
-    $project = false;
-    if (strstr($cmd, 'TestRunnerProject')) {
-      $project = $param;
+    if ($project) {
       $runner = 'run.php site '.$project;
     }
     else {
-      if ($param) $runInitPath = ' '.$param;
       $runner = 'run.php';
     }
+    if ($runInitPath) $runInitPath = ' '.$runInitPath;
     $testResult = $this->shellexec("php $runner \"$cmd\"$runInitPath", true);
-    print "Test result:\n================\n$testResult\n================\n";
     if (strstr($testResult, 'FAILURES!')) $this->errors[] = [$testResult, '"FAILURES!" in test result'];
     if (strstr($testResult, 'Fatal error')) $this->errors[] = [$testResult, '"Fatal error" in test result'];
-    //if (strstr($testResult, 'fault')) $this->errors[] = [$testResult, '"fault" in test result'];
     if (preg_match('/<running tests: (.*)>/', $testResult, $m)) {
-      $tests = Misc::quoted2arr($m[1]);
-      if ($project) foreach ($tests as &$v) $v = Misc::removePrefix('Test', $v)." ($project)";
-      $this->effectedTests = array_merge($this->effectedTests, $tests);
+      if (($tests = Misc::quoted2arr($m[1]))) {
+        if ($project) foreach ($tests as &$v) $v = Misc::removePrefix('Test', $v)." ($project)";
+        $this->effectedTests = array_merge($this->effectedTests, $tests);
+        print "Test result:\n================\n$testResult\n================\n";
+      }
     }
   }
 
@@ -147,24 +144,40 @@ class Ci extends GitBase {
       if (!file_exists("$f/.ci")) continue;
       $libFolder = file_exists("$f/lib") ? "$f/lib" : $f;
       $runInitPath = file_exists("$f/init.php") ? "$f/init.php" : $libFolder;
-      $this->runTest("(new TestRunnerLib('$libFolder'))->run()", $runInitPath);
+      $this->runTest("(new TestRunnerLib('$libFolder'))->run()", null, $runInitPath);
     }
   }
 
-  protected function runProjectsTests() {
-    if (!file_exists(NGN_ENV_PATH.'/projects')) return;
-    output('Running projects tests');
+  function projectTestCommon() {
     $domain = 'test.'.$this->server['baseDomain'];
     $this->shellexec("pm localServer createProject test $domain common");
     $this->runTest("(new TestRunnerProject('test'))->g()", 'test');
     chdir(dirname(__DIR__).'/pm');
     $this->shellexec('php pm.php localProject delete test');
+  }
+
+  function projectTestSb() {
+    $domain = 'test.'.$this->server['baseDomain'];
+    $this->shellexec("pm localServer createProject test $domain sb");
+    $this->runTest("(new TestRunnerPlib('test', 'sb'))->run()", 'test', 'sb');
+    chdir(dirname(__DIR__).'/pm');
+    $this->shellexec('php pm.php localProject delete test');
+  }
+
+  function projectLocalTests() {
     chdir(dirname(__DIR__).'/run');
     foreach (glob(NGN_ENV_PATH.'/projects/*', GLOB_ONLYDIR) as $f) {
       if (!is_dir("$f/.git")) continue;
       $project = basename($f);
       $this->runTest("(new TestRunnerProject('$project'))->l()", $project); // project level specific tests. on project $project
     }
+  }
+
+  protected function runProjectsTests() {
+    if (!file_exists(NGN_ENV_PATH.'/projects')) return;
+    $this->projectTestCommon();
+    $this->projectTestSb();
+    $this->projectLocalTests();
   }
 
   protected function sendResults() {
