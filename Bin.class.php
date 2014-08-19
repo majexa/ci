@@ -9,28 +9,29 @@ class Bin {
    */
   protected $paths;
 
-  protected $binFolder = '/usr/bin';
+  static $binFolder = '/usr/bin';
 
   function __construct(array $paths) {
     $this->paths = $paths;
     $this->checkSignature();
   }
 
-  protected function binFiles() {
-    return array_filter(glob($this->binFolder.'/*'), function($file) {
+  static function binFiles() {
+    return array_filter(glob(Bin::$binFolder.'/*'), function($file) {
       return (bool)strstr(file_get_contents($file), '# ngn');
     });
   }
 
-  function remove() {
-    foreach ($this->binFiles() as $file) {
+  function remove($all = false) {
+    foreach (Bin::binFiles() as $file) {
+      if (!$all and isset($this->runFiles()[File::name($file)])) continue;
       output("$file removed");
       unlink($file);
     }
   }
 
   protected function checkSignature() {
-    foreach ($this->files() as $file) {
+    foreach ($this->runFiles() as $file) {
       if (!strstr(file_get_contents($file), '# ngn')) throw new Exception("File '$file' has no NGN signature");
     }
   }
@@ -40,9 +41,9 @@ class Bin {
   }
 
   protected function add() {
-    foreach ($this->files() as $file) {
-      $name = $this->name($file);
-      $newFile = $this->binFolder.'/'.$name;
+    foreach ($this->runFiles() as $file) {
+      $name = File::name($file);
+      $newFile = Bin::$binFolder.'/'.$name;
       if (file_exists($file) and file_exists($newFile) and sha1_file($newFile) == sha1_file($file)) {
         continue;
       }
@@ -52,14 +53,20 @@ class Bin {
     }
   }
 
-  protected function files() {
-    $files = [];
+  function runFiles() {
+    $r = [];
     foreach ($this->paths as $path) {
       foreach (glob("$path/*", GLOB_ONLYDIR) as $folder) {
-        if (($fs = glob("$folder/*.run"))) foreach ($fs as $f) $files[] = $f;
+        if (($files = glob("$folder/*.run"))) {
+          foreach ($files as $file) {
+            $name = File::name($file);
+            if (isset($r[$name])) throw new Exception("Duplicate run file name. {$r[$name]} & $file");
+            $r[$name] = $file;
+          }
+        }
       }
     }
-    return $files;
+    return $r;
   }
 
   function update() {

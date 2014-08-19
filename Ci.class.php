@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Continuous integration system
+ * Непрерывная интеграция
  */
 class Ci extends GitBase {
 
@@ -32,7 +32,7 @@ class Ci extends GitBase {
     $this->restart();
     if ($this->server['sType'] != 'prod') {
       $this->runProjectsTests();
-      $this->runLibTests();
+      $this->libTests();
     }
     if (file_exists(NGN_ENV_PATH.'/projects') and $this->server['sType'] == 'prod') {
       $this->runTest("(new TestRunnerNgn('projectsIndexAvailable'))->run()");
@@ -87,7 +87,7 @@ class Ci extends GitBase {
       return;
     }
     chdir(NGN_ENV_PATH);
-    foreach($this->getEnvPackages() as $package) {
+    foreach ($this->getEnvPackages() as $package) {
       if (!file_exists(NGN_ENV_PATH.'/'.$package)) {
         output("cloning $package");
         print `git clone {$this->server['git']}/$package`;
@@ -119,13 +119,13 @@ class Ci extends GitBase {
     }
     if ($runInitPath) $runInitPath = ' '.$runInitPath;
     $testResult = $this->shellexec("php $runner \"$cmd\"$runInitPath", true);
-    if (strstr($testResult, 'FAILURES!')) $this->errors[] = [$testResult, '"FAILURES!" in test result'];
-    if (strstr($testResult, 'Fatal error')) $this->errors[] = [$testResult, '"Fatal error" in test result'];
+    if (($error = CliTestRunner::detectError($testResult))) $this->errors[] = [$testResult, $error];
     if (preg_match('/<running tests: (.*)>/', $testResult, $m)) {
       if (($tests = Misc::quoted2arr($m[1]))) {
-        if ($project) foreach ($tests as &$v) $v = Misc::removePrefix('Test', $v)." ($project)";
+        $runInitPathPrefix = $runInitPath ? $runInitPath.'|' : $runInitPath;
+        if ($project) foreach ($tests as &$v) $v = Misc::removePrefix('Test', $v)." ({$runInitPathPrefix}$project)";
         $this->effectedTests = array_merge($this->effectedTests, $tests);
-        print "Test result:\n================\n$testResult\n================\n";
+        print $testResult;
       }
     }
   }
@@ -139,12 +139,17 @@ class Ci extends GitBase {
     return $r;
   }
 
-  protected function runLibTests() {
-    foreach (glob(NGN_ENV_PATH.'/*', GLOB_ONLYDIR) as $f) {
-      if (!file_exists("$f/.ci")) continue;
-      $libFolder = file_exists("$f/lib") ? "$f/lib" : $f;
-      $runInitPath = file_exists("$f/init.php") ? "$f/init.php" : $libFolder;
-      $this->runTest("(new TestRunnerLib('$libFolder'))->run()", null, $runInitPath);
+  function libTests() {
+    $libFolders = [];
+    foreach (glob(NGN_ENV_PATH.'/*', GLOB_ONLYDIR) as $folder) {
+      if (!file_exists("$folder/.ci")) continue;
+      $libFolders[] = $folder;
+    }
+    output('Found: '.implode(', ', array_map('basename', $libFolders)));
+    foreach ($libFolders as $folder) {
+      $folder = file_exists("$folder/lib") ? "$folder/lib" : $folder;
+      $runInitPath = file_exists("$folder/init.php") ? "$folder/init.php" : $folder;
+      $this->runTest("(new TestRunnerLib('$folder'))->run()", null, $runInitPath);
     }
   }
 
