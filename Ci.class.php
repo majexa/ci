@@ -117,8 +117,7 @@ class Ci extends GitBase {
     else {
       $runner = 'run.php';
     }
-    if ($runInitPath) $runInitPath = ' '.$runInitPath;
-    $testResult = $this->shellexec("php $runner \"$cmd\"$runInitPath", true);
+    $testResult = $this->shellexec("php $runner \"$cmd\"".($runInitPath ? ' '.$runInitPath : ''), true);
     if (($error = CliTestRunner::detectError($testResult))) $this->errors[] = [$testResult, $error];
     if (preg_match('/<running tests: (.*)>/', $testResult, $m)) {
       if (($tests = Misc::quoted2arr($m[1]))) {
