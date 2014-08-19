@@ -17,8 +17,9 @@ class Ci extends GitBase {
     if ($this->forceParam != 'test') $this->_update();
     if (getOS() !== 'win') {
       print `pm localProjects updateIndex`;
-      $this->updateCron();
       $this->updateBin();
+      $this->updateCron();
+      $this->updateDaemons();
     }
     $this->test();
     chdir($this->cwd);
@@ -270,6 +271,34 @@ class Ci extends GitBase {
    */
   function removeBin() {
     print `sudo ci _removeBin`;
+  }
+
+  /**
+   * Показывает все демоны
+   */
+  function showDaemons() {
+    print '* '.implode("\n* ", (new Daemons)->r)."\n";
+  }
+
+  /**
+   * Обновляет демоны
+   */
+  function updateDaemons() {
+    $files = [];
+    foreach ($this->paths as $path) {
+      foreach (glob("$path/*", GLOB_ONLYDIR) as $folder) {
+        foreach (glob("$folder/*.php") as $file) {
+          if ($file == __FILE__) continue;
+          if (!strstr(file_get_contents($file), '// ngn-daemon')) continue;
+          $files[] = $file;
+        }
+      }
+    }
+    foreach ($files as $file) {
+      $projectName = basename(dirname($file));
+      $daemonName = basename(File::stripExt($file));
+      (new DaemonInstaller($projectName, $daemonName))->install();
+    }
   }
 
   function _updateBin() {
