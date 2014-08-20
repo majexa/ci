@@ -24,7 +24,7 @@ class GitFolder extends GitBase {
     chdir($this->folder);
     $this->shellexec("git fetch $remote", false);
     $branch = $this->wdBranch();
-    if ($forceRevCechk or $this->wdRev($branch) != $this->repoRev($remote, $branch)) {
+    if ($forceRevCechk or $this->wdRev($branch) != $this->remoteRev($remote, $branch)) {
       output("Resetting folder '{$this->folder}' to the HEAD of '$remote' remote");
       $this->shellexec("git reset --hard $remote/{$this->wdBranch()}");
       print $this->shellexec('git clean -f -d');
@@ -97,14 +97,14 @@ class GitFolder extends GitBase {
 
   protected function _hasChanges(array $remotes, $branch) {
     $remoteBranches = $this->remoteBranches();
+    //die2($remoteBranches);
     foreach ($remotes as $remote) {
       if (!in_array("$remote/$branch", $remoteBranches)) {
         //output("'{$this->folder}' branch '$remote/$branch' does not exists. Skipped");
         continue;
       }
-      //die2([$remote, $this->wdRev($branch), $this->repoRev($remote, $branch)]);
-      //output("\nwd rev: ".$this->wdRev($branch)."\nrepo rev: ".$this->repoRev($remote, $branch)."\nremote: $remote\nbranch: $branch");
-      if ($this->wdRev($branch) != $this->repoRev($remote, $branch)) return true;
+      //print "  wd rev: ".$this->wdRev($branch)."\n  remote rev: ".$this->remoteRev($remote, $branch)."\n  remote: $remote\n  branch: $branch";
+      if ($this->wdRev($branch) != $this->remoteRev($remote, $branch)) return true;
     }
     return false;
   }

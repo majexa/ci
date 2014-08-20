@@ -47,7 +47,7 @@ class GitBase {
     return trim($this->shellexec("git rev-parse refs/heads/$branch", false));
   }
 
-  protected function repoRev($remote, $branch) {
+  protected function remoteRev($remote, $branch) {
     return trim($this->shellexec("git rev-parse refs/remotes/$remote/$branch", false));
   }
 
