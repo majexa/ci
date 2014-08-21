@@ -8,7 +8,7 @@ class GitFolder extends GitBase {
   protected $folder;
 
   /**
-   * @param string Путь к git папке
+   * @param string $folder Путь к git папке
    */
   function __construct($folder) {
     parent::__construct();
@@ -68,12 +68,10 @@ class GitFolder extends GitBase {
     }
     $hasLocalChanges = false;
     if (!$this->isClean()) {
-      //output("$folder: try to add and commit. Remotes: ".implode(', ', $remotes));
       output("$folder: try to add and commit.");
       $this->commit();
       $hasLocalChanges = true;
     }
-    //$hasLocalChanges = strstr($r, 'nothing to commit');
     $branch = $this->wdBranch();
     if (!$hasLocalChanges and !$this->_hasChanges($remotes, $branch)) {
       output("$folder ($branch): no changes remote and local changes");
@@ -91,19 +89,12 @@ class GitFolder extends GitBase {
     return $this->_hasChanges($this->getRemotes(), $branch);
   }
 
-  function branchRemotes($branch) {
-
-  }
-
   protected function _hasChanges(array $remotes, $branch) {
     $remoteBranches = $this->remoteBranches();
-    //die2($remoteBranches);
     foreach ($remotes as $remote) {
       if (!in_array("$remote/$branch", $remoteBranches)) {
-        //output("'{$this->folder}' branch '$remote/$branch' does not exists. Skipped");
         continue;
       }
-      //print "  wd rev: ".$this->wdRev($branch)."\n  remote rev: ".$this->remoteRev($remote, $branch)."\n  remote: $remote\n  branch: $branch";
       if ($this->wdRev($branch) != $this->remoteRev($remote, $branch)) return true;
     }
     return false;
@@ -122,12 +113,12 @@ class GitFolder extends GitBase {
     return $r;
   }
 
-  /*
-  function master() {
-    print `git fetch origin -v`;
-    print `git checkout $this->masterBranch`;
-    print `git reset --hard origin/$this->masterBranch`;
+  function localBranches() {
+    $r = [];
+    foreach (explode("\n", trim(`git branch`)) as $v) {
+      $r[] = trim(Misc::removePrefix('* ', $v));
+    }
+    return $r;
   }
-  */
 
 }
