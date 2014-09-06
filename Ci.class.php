@@ -5,7 +5,6 @@
  */
 class Ci extends GitBase {
 
-  protected $forceParam;
   protected $updatedFolders = [], $effectedTests = [];
   protected $isChanges = false;
   protected $commonMailText = '';
@@ -13,8 +12,13 @@ class Ci extends GitBase {
   /**
    * Приводит систему к актуальному состоянию и тестирует её
    */
-  function update() {
-    if ($this->forceParam != 'test') $this->_update();
+  function update($forceParam = null) {
+    if ($forceParam != 'test') {
+      if (!$this->_update()) {
+        output("no changes");
+        return;
+      }
+    }
     if (getOS() !== 'win') {
       print `pm localProjects updateIndex`;
       $this->updateBin();
@@ -67,6 +71,7 @@ class Ci extends GitBase {
     if ($this->updatedFolders) {
       $this->commonMailText = "Deploy by Continuous integration system at ".date('d.m.Y H:i:s')."\nUpdated folders:\n".implode("\n", $this->updatedFolders).self::$delimiter;
     }
+    return (bool)$this->updatedFolders;
   }
 
   /**
@@ -249,7 +254,7 @@ class Ci extends GitBase {
     foreach ($this->findCronFiles() as $file) $cron .= trim(file_get_contents($file))."\n";
     if (file_exists(NGN_ENV_PATH.'/pm')) $cron .= `pm localServer cron`;
     if ($this->server['sType'] != 'prod') $cron .= "30 4 * * * ci update >> /home/user/ngn-env/logs/cron 2>&1\n";
-    //$cron .= "* * * * * env > /home/user/ngn-env/logs/cron.env\n";
+    // $cron .= "* * * * * env > /home/user/ngn-env/logs/cron.env\n";
     $currentCron = $this->shellexec("crontab -l", false);
     Errors::checkText($cron);
     if ($cron and $cron != $currentCron) {
