@@ -121,4 +121,8 @@ class GitFolder extends GitBase {
     return $r;
   }
 
+  protected function throwError($cmd, $error) {
+    throw new Exception("\nfolder: {$this->folder}\ncmd: $cmd\n".trim($error));
+  }
+
 }

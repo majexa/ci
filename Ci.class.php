@@ -60,7 +60,7 @@ class Ci extends GitBase {
     $this->updateEnvPackages();
     if (!($folders = $this->findGitFolders())) {
       output("No git folders found");
-      return;
+      return false;
     }
     foreach ($folders as $folder) {
       if ((new GitFolder($folder))->reset()) {

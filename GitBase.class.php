@@ -40,7 +40,13 @@ class GitBase {
   }
 
   protected function shellexec($cmd, $output = true) {
-    return Cli::shell($cmd, $output);
+    $r = Cli::shell($cmd.' 2>&1', $output); // перенаправляем stderr в stdout
+    if (strstr($r, 'fatal:')) $this->throwError($cmd, $r);
+    return $r;
+  }
+
+  protected function throwError($cmd, $error) {
+    throw new Exception("\n$cmd\n".trim($error));
   }
 
   protected function wdRev($branch) {
