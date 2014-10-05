@@ -9,15 +9,17 @@ class Ci extends GitBase {
   protected $isChanges = false;
   protected $commonMailText = '';
 
+  function asd() {
+    (new GitFolder('/home/user/ngn-env/pm'))->reset();
+  }
+
   /**
    * Приводит систему к актуальному состоянию и тестирует её
    */
-  function update($forceParam = null) {
-    if ($forceParam != 'test') {
-      if (!$this->_update()) {
-        output("no changes");
-        return;
-      }
+  function update($forceUpdate = false) {
+    if (!$this->_update()) {
+      output("no changes");
+      if (!$forceUpdate) return;
     }
     if (getOS() !== 'win') {
       print `pm localProjects updateIndex`;
