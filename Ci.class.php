@@ -17,6 +17,7 @@ class Ci extends GitBase {
    * Приводит систему к актуальному состоянию и тестирует её
    */
   function update($forceUpdate = false) {
+    $this->runRootNgnScript('install');
     if (!$this->_update()) {
       output("no changes");
       if (!$forceUpdate) return;
@@ -30,6 +31,21 @@ class Ci extends GitBase {
     $this->test();
     chdir($this->cwd);
   }
+
+  /*
+  protected function runRootNgnScript($name) {
+    foreach ($this->paths as $path) {
+      foreach (glob("$path/*") as $p) {
+        if (file_exists("$p/$name.php")) {
+          $folder = basename($p);
+          if ("$p/{$name}ed")
+          print "running $folder/$name\n";
+          `run $folder/$name`;
+        }
+      }
+    }
+  }
+  */
 
   /**
    * Тестирует систему
