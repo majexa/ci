@@ -17,7 +17,7 @@ class Ci extends GitBase {
    * Приводит систему к актуальному состоянию и тестирует её
    */
   function update($forceUpdate = false) {
-    $this->runRootNgnScript('install');
+    //$this->runRootNgnScript('install');
     if (!$this->_update()) {
       output("no changes");
       if (!$forceUpdate) return;
