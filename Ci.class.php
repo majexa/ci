@@ -9,10 +9,6 @@ class Ci extends GitBase {
   protected $isChanges = false;
   protected $commonMailText = '';
 
-  function asd() {
-    (new GitFolder('/home/user/ngn-env/pm'))->reset();
-  }
-
   /**
    * Приводит систему к актуальному состоянию и тестирует её
    */
