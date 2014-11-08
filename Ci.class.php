@@ -9,11 +9,15 @@ class Ci extends GitBase {
   protected $isChanges = false;
   protected $commonMailText = '';
 
+  function __construct() {
+    parent::__construct();
+    Dir::clear(Ci::$tempFolder);
+  }
+
   /**
    * Приводит систему к актуальному состоянию и тестирует её
    */
   function update($forceUpdate = false) {
-    //$this->runRootNgnScript('install');
     if (!$this->_update()) {
       output("no changes");
       if (!$forceUpdate) return;
@@ -27,21 +31,6 @@ class Ci extends GitBase {
     $this->test();
     chdir($this->cwd);
   }
-
-  /*
-  protected function runRootNgnScript($name) {
-    foreach ($this->paths as $path) {
-      foreach (glob("$path/*") as $p) {
-        if (file_exists("$p/$name.php")) {
-          $folder = basename($p);
-          if ("$p/{$name}ed")
-          print "running $folder/$name\n";
-          `run $folder/$name`;
-        }
-      }
-    }
-  }
-  */
 
   /**
    * Тестирует систему
@@ -115,29 +104,18 @@ class Ci extends GitBase {
     }
   }
 
-  /*
-  function clean() {
-    if (!($folders = $this->findGitFolders())) {
-      output("No git folders found");
-      return;
-    }
-    foreach ($folders as $folder) {
-      output2($folder);
-      $f = (new GitFolder($folder));
-      print $f->shellexec('git clean -f -d');
-    }
-  }
-  */
-
   protected function runTest($cmd, $project = null, $runInitPath = '') {
     if (getcwd() != NGN_ENV_PATH.'/run') chdir(NGN_ENV_PATH.'/run');
+    $testCheckFile = Ci::$tempFolder.'/tst'.md5($cmd.($project ?: ''));
+    touch($testCheckFile);
     if ($project) {
       $runner = 'run.php site '.$project;
     }
     else {
       $runner = 'run.php';
     }
-    $testResult = $this->shellexec("php $runner \"$cmd\"".($runInitPath ? ' '.$runInitPath : ''), true);
+    $testResult = $this->shellexec("php $runner \"$cmd; unlink('$testCheckFile');\"".($runInitPath ? ' '.$runInitPath : ''), true);
+    if (file_exists($testCheckFile)) $this->errors[] = ['test aborted: '.$cmd, 'test aborted: '.$cmd];
     if (($error = TestCore::detectError($testResult))) $this->errors[] = [$testResult, $error];
     if (preg_match('/<running tests: (.*)>/', $testResult, $m)) {
       if (($tests = Misc::quoted2arr($m[1]))) {
@@ -272,8 +250,8 @@ class Ci extends GitBase {
     $currentCron = $this->shellexec("crontab -l", false);
     Errors::checkText($cron);
     if ($cron and $cron != $currentCron) {
-      file_put_contents(__DIR__.'/temp/.crontab', $cron);
-      print $this->shellexec("crontab ".__DIR__."/temp/.crontab");
+      file_put_contents(Ci::$tempFolder.'/.crontab', $cron);
+      print $this->shellexec("crontab ".Ci::$tempFolder."/temp/.crontab");
       print "cron updated:\n--------\n$cron";
     }
   }
@@ -377,4 +355,8 @@ class Ci extends GitBase {
     }
   }
 
+  static $tempFolder;
+
 }
+
+Ci::$tempFolder = __DIR__.'/temp';
