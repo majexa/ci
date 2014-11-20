@@ -5,16 +5,15 @@ class GitBase {
   protected $server, $cwd, $masterBranch = 'master', $paths = [];
 
   function __construct() {
-    if (file_exists(NGN_ENV_PATH.'/config/server.php')) {
-      $this->server = require NGN_ENV_PATH.'/config/server.php';
-      Arr::checkEmpty($this->server, ['baseDomain']);
+    if (!file_exists(NGN_ENV_PATH.'/config/server.php')) {
+      print "Lets configure the server\n";
+      $server = [];
+      if (!($server['baseDomain'] = Cli::prompt("Input server public host name"))) throw new Exception('required');
+      if (!($server['maintaner'] = Cli::prompt("Input maintaner email"))) throw new Exception('required');
+      if (!($server['git'] = Cli::prompt("Input git URL"))) throw new Exception('required');
+      FileVar::updateVar(NGN_ENV_PATH.'/config/server.php', $server);
     }
-    else {
-      $this->server = [
-        'branch'     => 'master',
-        'baseDomain' => `hostname`,
-      ];
-    }
+    $this->server = require NGN_ENV_PATH.'/config/server.php';
     if (!isset($this->server['sType'])) $this->server['sType'] = 'dev';
     if (!isset($this->server['branch'])) $this->server['branch'] = 'master';
     $this->cwd = getcwd();

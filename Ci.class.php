@@ -150,7 +150,12 @@ class Ci extends GitBase {
     }
   }
 
+  protected function serverHasProjectsSupport() {
+    return file_exists(NGN_ENV_PATH.'/projects');
+  }
+
   function projectTestCommon() {
+    if (!$this->serverHasProjectsSupport()) return;
     $domain = 'test.'.$this->server['baseDomain'];
     $this->shellexec("pm localServer createProject test $domain common");
     $this->runTest("(new TestRunnerProject('test'))->g()", 'test');
@@ -159,6 +164,7 @@ class Ci extends GitBase {
   }
 
   function projectTestSb() {
+    if (!$this->serverHasProjectsSupport()) return;
     $domain = 'test.'.$this->server['baseDomain'];
     $this->shellexec("pm localServer createProject test $domain sb");
     $this->runTest("(new TestRunnerPlib('test', 'sb'))->run()", 'test', 'sb');

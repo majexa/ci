@@ -51,7 +51,8 @@ class GitFolder extends GitBase {
 
   function commit() {
     print `git add --all .`;
-    print `git commit -am "Auto-commit from {$this->server['baseDomain']}"`;
+    $date = date('d.m.Y H:i:s');
+    print `git commit -am "Auto-commit on $date"`;
   }
 
   /**
