@@ -15,6 +15,17 @@ class Ci extends GitBase {
   }
 
   /**
+   * Отображает время и статус последнего апдейта системы
+   */
+  function status() {
+    if (file_exists(__DIR__.'/.status.php')) {
+      if (($r = require __DIR__.'/.status.php')) {
+        print date('d.m.Y H:i:s', $r['time']).': '.($r['success'] ? 'success' : 'failed')."\n";
+      }
+    }
+  }
+
+  /**
    * Приводит систему к актуальному состоянию и тестирует её
    */
   function update($forceUpdate = false) {
@@ -314,17 +325,6 @@ class Ci extends GitBase {
 
   protected function projectsCommand($action) {
     $this->shellexec("php /home/user/ngn-env/pm/pm.php localProjects $action");
-  }
-
-  /**
-   * Отображает время и статус последнего апдейта системы
-   */
-  function status() {
-    if (file_exists(__DIR__.'/.status.php')) {
-      if (($r = require __DIR__.'/.status.php')) {
-        print date('d.m.Y H:i:s', $r['time']).': '.($r['success'] ? 'success' : 'failed')."\n";
-      }
-    }
   }
 
   protected function getEnvPackages() {
