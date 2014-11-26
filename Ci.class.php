@@ -268,7 +268,8 @@ class Ci extends GitBase {
     Errors::checkText($cron);
     if ($cron and $cron != $currentCron) {
       file_put_contents(Ci::$tempFolder.'/.crontab', $cron);
-      print $this->shellexec("crontab ".Ci::$tempFolder."/temp/.crontab");
+      print $this->shellexec('crontab '.Ci::$tempFolder.'/.crontab');
+      //die2('crontab '.Ci::$tempFolder.'/.crontab');
       print "cron updated:\n--------\n$cron";
     }
   }
@@ -296,6 +297,11 @@ class Ci extends GitBase {
 
   /**
    * Обновляет демоны
+   *
+   * Сканирует каталоги /home/user, /home/user/ngn-env, /home/user/ngn-env/projects.
+   * Находит файлы с расширением .php в которых есть комментарий "// ngn-daemon".
+   * Инсталлирует демон с именем folder-name, где folder - каталог с найденным файло, а
+   * name - имя файла.
    */
   function updateDaemons() {
     $files = [];
