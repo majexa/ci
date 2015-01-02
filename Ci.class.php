@@ -168,6 +168,7 @@ class Ci extends GitBase {
   function projectTestCommon() {
     if (!$this->serverHasProjectsSupport()) return;
     $domain = 'test.'.$this->server['baseDomain'];
+    //$this->shellexec("pm localServer deleteProject test");
     $this->shellexec("pm localServer createProject test $domain common");
     $this->runTest("(new TestRunnerProject('test'))->g()", 'test');
     chdir(dirname(__DIR__).'/pm');
@@ -269,7 +270,6 @@ class Ci extends GitBase {
     if ($cron and $cron != $currentCron) {
       file_put_contents(Ci::$tempFolder.'/.crontab', $cron);
       print $this->shellexec('crontab '.Ci::$tempFolder.'/.crontab');
-      //die2('crontab '.Ci::$tempFolder.'/.crontab');
       print "cron updated:\n--------\n$cron";
     }
   }
