@@ -241,7 +241,7 @@ class Ci extends GitBase {
     chdir(dirname(__DIR__).'/run');
     Cli::shell('php run.php "(new AllErrors)->clear()"');
     if (file_exists(NGN_ENV_PATH.'/projects')) {
-      $this->shellexec('php /home/user/ngn-env/pm/pm.php localProjects cc');
+      $this->shellexec('php '.NGN_ENV_PATH.'/pm/pm.php localProjects cc');
     }
   }
 
@@ -261,8 +261,18 @@ class Ci extends GitBase {
    */
   function updateCron() {
     $cron = '';
-    foreach ($this->findCronFiles() as $file) $cron .= trim(file_get_contents($file))."\n";
-    if (file_exists(NGN_ENV_PATH.'/pm')) $cron .= `pm localServer cron`;
+    foreach ($this->findCronFiles() as $file) {
+      $c = file_get_contents($file);
+      if (strstr($c, '{cmd}')) {
+        $folder = dirname($file);
+        if (!file_exists("$folder/cmd.php")) {
+          throw new Exception("U can't use {cmd} string without cmd.php file in '$folder' folder");
+        }
+        $c = str_replace('{cmd}', "php $folder/cmd.php", $c);
+      }
+      $cron .= trim($c)."\n";
+    }
+    if (file_exists(NGN_ENV_PATH.'/pm')) $cron .= $this->shellexec('php '.NGN_ENV_PATH.'/pm/pm.php localServer cron');
     if ($this->server['sType'] != 'prod') $cron .= "30 4 * * * ci update >> /home/user/ngn-env/logs/cron 2>&1\n";
     // $cron .= "* * * * * env > /home/user/ngn-env/logs/cron.env\n";
     $currentCron = $this->shellexec("crontab -l", false);
