@@ -44,7 +44,7 @@ class Ci extends GitBase {
   }
 
   /**
-   * Тестирует систему
+   * Запускает все существующие в ngn-среде тесты и отправляет email с отчетом
    */
   function test() {
     $this->clearErrors();
@@ -147,6 +147,9 @@ class Ci extends GitBase {
     return $r;
   }
 
+  /**
+   * Запускает тесты stand-alone библиотек
+   */
   function libTests() {
     $libFolders = [];
     foreach (glob(NGN_ENV_PATH.'/*', GLOB_ONLYDIR) as $folder) {
@@ -165,6 +168,9 @@ class Ci extends GitBase {
     return file_exists(NGN_ENV_PATH.'/projects');
   }
 
+  /**
+   * Запускает глобальные тесты на тестовом проекте
+   */
   function projectTestCommon() {
     if (!$this->serverHasProjectsSupport()) return;
     $domain = 'test.'.$this->server['baseDomain'];
@@ -175,6 +181,9 @@ class Ci extends GitBase {
     $this->shellexec('php pm.php localProject delete test');
   }
 
+  /**
+   * Запускает тесты SiteBuilder'а
+   */
   function projectTestSb() {
     if (!$this->serverHasProjectsSupport()) return;
     $domain = 'test.'.$this->server['baseDomain'];
@@ -184,6 +193,9 @@ class Ci extends GitBase {
     $this->shellexec('php pm.php localProject delete test');
   }
 
+  /**
+   * Запускает локальные проектные тесты на всех проектах
+   */
   function projectLocalTests() {
     chdir(dirname(__DIR__).'/run');
     foreach (glob(NGN_ENV_PATH.'/projects/*', GLOB_ONLYDIR) as $f) {
@@ -191,6 +203,16 @@ class Ci extends GitBase {
       $project = basename($f);
       $this->runTest("(new TestRunnerProject('$project'))->l()", $project); // project level specific tests. on project $project
     }
+  }
+
+  /**
+   * Запускает client-side тесты из стандартной библиотеки ngn-cst на тестовом проекте
+   */
+  function projectClientSideTests() {
+    $this->shellexec("pm localServer createProject test $domain common");
+    $this->runTest("(new TestRunnerProject('test'))->g()", 'test');
+    chdir(dirname(__DIR__).'/pm');
+    $this->shellexec('php pm.php localProject delete test');
   }
 
   protected function runProjectsTests() {
