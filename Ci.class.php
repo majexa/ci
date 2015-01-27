@@ -48,6 +48,7 @@ class Ci extends GitBase {
    */
   function test() {
     $this->clearErrors();
+    print `run cc`;
     $this->restart();
     if ($this->server['sType'] != 'prod') {
       $this->runProjectsTests();
