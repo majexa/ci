@@ -29,6 +29,7 @@ class Ci extends GitBase {
    * Приводит систему к актуальному состоянию и тестирует её
    */
   function update($forceUpdate = false) {
+    print `run cc`;
     if (!$this->_update()) {
       output("no changes");
       if (!$forceUpdate) return;
@@ -48,7 +49,6 @@ class Ci extends GitBase {
    */
   function test() {
     $this->clearErrors();
-    print `run cc`;
     $this->restart();
     if ($this->server['sType'] != 'prod') {
       $this->runProjectsTests();
