@@ -158,6 +158,7 @@ class Ci extends GitBase {
     foreach (glob(NGN_ENV_PATH.'/ngn-cst/casper/test/*.json') as $file) {
       $this->runClientSideTest(str_replace('.json', '', basename($file)));
     }
+    $this->shellexec('php pm.php localProject delete test');
   }
 
   protected $errors = [];
