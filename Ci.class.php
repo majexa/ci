@@ -29,7 +29,6 @@ class Ci extends GitBase {
    * Приводит систему к актуальному состоянию и тестирует её
    */
   function update($forceUpdate = false) {
-    print `run cc`;
     if (!$this->_update()) {
       output("no changes");
       if (!$forceUpdate) return;
@@ -57,6 +56,7 @@ class Ci extends GitBase {
     if (file_exists(NGN_ENV_PATH.'/projects') and $this->server['sType'] == 'prod') {
       $this->runTest("(new TestRunnerNgn('projectsIndexAvailable'))->run()");
     }
+    $this->runClientSideTests();
     $this->runTest("(new TestRunnerNgn('allErrors'))->run()");
     $this->sendResults();
     $this->updateStatus();
@@ -86,6 +86,7 @@ class Ci extends GitBase {
     if ($this->updatedFolders) {
       $this->commonMailText = "Deploy by Continuous integration system at ".date('d.m.Y H:i:s')."\nUpdated folders:\n".implode("\n", $this->updatedFolders).self::$delimiter;
     }
+    print `run cc`;
     return (bool)$this->updatedFolders;
   }
 
@@ -136,6 +137,27 @@ class Ci extends GitBase {
         $this->effectedTests = array_merge($this->effectedTests, $tests);
         print $testResult;
       }
+    }
+  }
+
+  protected function runClientSideTest($name) {
+    $rumaxFolder = NGN_ENV_PATH."/doc/web/m/daily-ngn-cst/$name";
+
+    //print shell_exec("php ".NGN_ENV_PATH."/projects/test/cmd.php preTest/$name");
+    print shell_exec( //
+      "casperjs ".NGN_ENV_PATH."/ngn/more/casper/test.js --projectDir=".NGN_ENV_PATH."/projects/test ". //
+      "--disableAfterCaptureCmd=1 --stepsFile=$name --rumaxFolder=$rumaxFolder --ngnPath=".NGN_ENV_PATH."/ngn");
+  }
+
+  /**
+   * Запускает client-side тесты из стандартной библиотеки ngn-cst на тестовом проекте
+   */
+  function runClientSideTests() {
+    $domain = 'test.'.$this->server['baseDomain'];
+    $this->shellexec("pm localServer createProject test $domain common");
+    Dir::copy(NGN_ENV_PATH.'/ngn-cst/dummyProject', NGN_ENV_PATH.'/projects/test', false);
+    foreach (glob(NGN_ENV_PATH.'/ngn-cst/casper/test/*.json') as $file) {
+      $this->runClientSideTest(str_replace('.json', '', basename($file)));
     }
   }
 
@@ -204,16 +226,6 @@ class Ci extends GitBase {
       $project = basename($f);
       $this->runTest("(new TestRunnerProject('$project'))->l()", $project); // project level specific tests. on project $project
     }
-  }
-
-  /**
-   * Запускает client-side тесты из стандартной библиотеки ngn-cst на тестовом проекте
-   */
-  function projectClientSideTests() {
-    $this->shellexec("pm localServer createProject test $domain common");
-    $this->runTest("(new TestRunnerProject('test'))->g()", 'test');
-    chdir(dirname(__DIR__).'/pm');
-    $this->shellexec('php pm.php localProject delete test');
   }
 
   protected function runProjectsTests() {
