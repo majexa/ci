@@ -142,8 +142,7 @@ class Ci extends GitBase {
 
   protected function runClientSideTest($name) {
     $rumaxFolder = NGN_ENV_PATH."/doc/web/m/daily-ngn-cst/$name";
-
-    //print shell_exec("php ".NGN_ENV_PATH."/projects/test/cmd.php preTest/$name");
+    print shell_exec("php ".NGN_ENV_PATH."/projects/test/cmd.php preTest/$name");
     print shell_exec( //
       "casperjs ".NGN_ENV_PATH."/ngn/more/casper/test.js --projectDir=".NGN_ENV_PATH."/projects/test ". //
       "--disableAfterCaptureCmd=1 --stepsFile=$name --rumaxFolder=$rumaxFolder --ngnPath=".NGN_ENV_PATH."/ngn");
