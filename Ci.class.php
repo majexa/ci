@@ -56,7 +56,7 @@ class Ci extends GitBase {
     if (file_exists(NGN_ENV_PATH.'/projects') and $this->server['sType'] == 'prod') {
       $this->runTest("(new TestRunnerNgn('projectsIndexAvailable'))->run()");
     }
-    $this->runClientSideTests();
+    //$this->runClientSideTests();
     $this->runTest("(new TestRunnerNgn('allErrors'))->run()");
     $this->sendResults();
     $this->updateStatus();
