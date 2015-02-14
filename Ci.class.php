@@ -345,7 +345,7 @@ class Ci extends GitBase {
    *
    * Сканирует каталоги /home/user, /home/user/ngn-env, /home/user/ngn-env/projects.
    * Находит файлы с расширением .php в которых есть комментарий "// ngn-daemon".
-   * Инсталлирует демон с именем folder-name, где folder - каталог с найденным файло, а
+   * Инсталлирует демон с именем folder-name, где folder - каталог с найденным файлом, а
    * name - имя файла.
    */
   function updateDaemons() {
