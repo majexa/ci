@@ -79,7 +79,7 @@ class GitFolder extends GitBase {
       return;
     }
     foreach ($remotes as $remote) {
-      output("$folder: process remote '$remote'");
+      output("{$this->folder}: process remote '$remote'");
       $this->shellexec("git pull $remote $branch");
       $this->shellexec("git push $remote $branch");
     }
