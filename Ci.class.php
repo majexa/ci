@@ -272,7 +272,7 @@ class Ci extends GitBase {
     $this->shellexec('php /home/user/ngn-env/pm/pm.php localProjects restart');
   }
 
-  protected function clearErrors() {
+  function clearErrors() {
     chdir(dirname(__DIR__).'/run');
     Cli::shell('php run.php "(new AllErrors)->clear()"');
     if (file_exists(NGN_ENV_PATH.'/projects')) {
