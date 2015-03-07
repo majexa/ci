@@ -167,6 +167,7 @@ class Ci extends GitBase {
     $r = Cli::shell($cmd, $output);
     if (preg_match('/(?<!all)error/i', $r)) $this->errors[] = [$r, '"error" text in shell output of cmd: '.$cmd];
     if (preg_match('/(?<!all)fatal/i', $r)) $this->errors[] = [$r, '"error" text in shell output of cmd: '.$cmd];
+    if ($this->errors) die2($this->errors[1]);
     return $r;
   }
 
@@ -232,8 +233,8 @@ class Ci extends GitBase {
     if (!file_exists(NGN_ENV_PATH.'/projects')) return;
     $this->shellexec('pm localProject delete test'); // удаляем тестовый проект, если мы вдруг создавали тестовый сервер вручную
     $this->projectTestCommon();
-    $this->projectTestSb();
-    $this->projectLocalTests();
+    //$this->projectTestSb();
+    //$this->projectLocalTests();
   }
 
   protected function sendResults() {
