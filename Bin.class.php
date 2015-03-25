@@ -17,7 +17,7 @@ class Bin {
   }
 
   static function binFiles() {
-    return array_filter(glob(Bin::$binFolder.'/*'), function($file) {
+    return array_filter(glob(Bin::$binFolder.'/*'), function ($file) {
       return (bool)strstr(file_get_contents($file), '# ngn');
     });
   }
@@ -57,12 +57,11 @@ class Bin {
     $r = [];
     foreach ($this->paths as $path) {
       foreach (glob("$path/*", GLOB_ONLYDIR) as $folder) {
-        if (($files = glob("$folder/*.run"))) {
-          foreach ($files as $file) {
-            $name = File::name($file);
-            if (isset($r[$name])) throw new Exception("Duplicate run file name. {$r[$name]} & $file");
-            $r[$name] = $file;
-          }
+        if (!($files = glob("$folder/*.run"))) continue;
+        foreach ($files as $file) {
+          $name = File::name($file);
+          if (isset($r[$name])) throw new Exception("Duplicate run file name. {$r[$name]} & $file");
+          $r[$name] = $file;
         }
       }
     }
