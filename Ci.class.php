@@ -167,7 +167,7 @@ class Ci extends GitBase {
     $r = Cli::shell($cmd, $output);
     if (preg_match('/(?<!all)error/i', $r)) $this->errors[] = [$r, '"error" text in shell output of cmd: '.$cmd];
     if (preg_match('/(?<!all)fatal/i', $r)) $this->errors[] = [$r, '"error" text in shell output of cmd: '.$cmd];
-    if ($this->errors) die2($this->errors[1]);
+    if ($this->errors) die2($this->errors);
     return $r;
   }
 
