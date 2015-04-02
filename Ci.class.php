@@ -231,7 +231,7 @@ class Ci extends GitBase {
 
   protected function runProjectsTests() {
     if (!file_exists(NGN_ENV_PATH.'/projects')) return;
-    $this->shellexec('pm localProject delete test'); // удаляем тестовый проект, если мы вдруг создавали тестовый сервер вручную
+    $this->shellexec('pm localServer deleteProject test'); // удаляем тестовый проект, если мы вдруг создавали тестовый сервер вручную
     $this->projectTestCommon();
     //$this->projectTestSb();
     //$this->projectLocalTests();
@@ -293,25 +293,33 @@ class Ci extends GitBase {
     return $files;
   }
 
+    protected function cronRenderContents($file) {
+        $c = file_get_contents($file);
+        if (strstr($c, '{cmd}')) {
+            $folder = dirname($file);
+            if (!file_exists("$folder/cmd.php")) {
+                throw new Exception("U can't use {cmd} string without cmd.php file in '$folder' folder");
+            }
+            $c = str_replace('{cmd}', "php $folder/cmd.php", $c);
+        }
+        return trim($c);
+    }
+
   /**
    * Собирает крон всеми имеющимися в системе методами и заменяет им крон текущего юзера
    */
-  function updateCron() {
+  function updateCron($debug = false) {
     $cron = '';
     foreach ($this->findCronFiles() as $file) {
-      $c = file_get_contents($file);
-      if (strstr($c, '{cmd}')) {
-        $folder = dirname($file);
-        if (!file_exists("$folder/cmd.php")) {
-          throw new Exception("U can't use {cmd} string without cmd.php file in '$folder' folder");
-        }
-        $c = str_replace('{cmd}', "php $folder/cmd.php", $c);
+      $c = $this->cronRenderContents($file);
+      if ($debug) {
+          output2($file);
+          output($c);
       }
-      $cron .= trim($c)."\n";
+      $cron .= "$c\n";
     }
     if (file_exists(NGN_ENV_PATH.'/pm')) $cron .= $this->shellexec('php '.NGN_ENV_PATH.'/pm/pm.php localServer cron');
     if ($this->server['sType'] != 'prod') $cron .= "30 4 * * * ci update >> /home/user/ngn-env/logs/cron 2>&1\n";
-    // $cron .= "* * * * * env > /home/user/ngn-env/logs/cron.env\n";
     $currentCron = $this->shellexec("crontab -l", false);
     Errors::checkText($cron);
     if ($cron and $cron != $currentCron) {
