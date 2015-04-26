@@ -127,7 +127,7 @@ class Ci extends GitBase {
     else {
       $runner = 'run.php';
     }
-    $testResult = $this->shellexec("php $runner \"$cmd; unlink('$testCheckFile');\"".($runInitPath ? ' '.$runInitPath : ''), true);
+    $testResult = $this->shellexec("php $runner \"$cmd; unlink('$testCheckFile');\"".($runInitPath ? ' '.$runInitPath : ''));
     if (file_exists($testCheckFile)) $this->errors[] = ['test aborted: '.$cmd, 'test aborted: '.$cmd];
     if (($error = TestCore::detectError($testResult))) $this->errors[] = [$testResult, $error];
     if (preg_match('/<running tests: (.*)>/', $testResult, $m)) {
@@ -180,8 +180,9 @@ class Ci extends GitBase {
       if (!file_exists("$folder/.ci")) continue;
       $libFolders[] = $folder;
     }
-    output('Found: '.implode(', ', array_map('basename', $libFolders)));
+    output('Found lib tests: '.implode(', ', array_map('basename', $libFolders)));
     foreach ($libFolders as $folder) {
+      output3($folder);
       $folder = file_exists("$folder/lib") ? "$folder/lib" : $folder;
       $runInitPath = file_exists("$folder/init.php") ? "$folder/init.php" : $folder;
       $this->runTest("(new TestRunnerLib('$folder'))->run()", null, $runInitPath);
