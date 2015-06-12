@@ -373,7 +373,7 @@ class Ci extends GitBase {
     foreach ($files as $file) {
       $projectName = basename(dirname($file));
       $daemonName = basename(File::stripExt($file));
-      (new DaemonInstaller($projectName, $daemonName))->install();
+      (new Daemon($projectName, $daemonName))->install();
     }
   }
 
