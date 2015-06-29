@@ -1,3 +1,3 @@
 # continuous integration
 
-отвечает за обновление ngn
+Ci - это утилита непрерывной разработки на базе технологии Ngn Envirnment
