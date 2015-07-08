@@ -20,7 +20,7 @@ class GitBase {
     $home = dirname(NGN_ENV_PATH);
     $this->paths = [
       "$home",
-      "$home/projects",
+      "$home/ngn-env/projects",
       "$home/ngn-env",
     ];
   }
