@@ -199,7 +199,6 @@ class Ci extends GitBase {
   function projectTestCommon() {
     if (!$this->serverHasProjectsSupport()) return;
     $domain = 'test.'.$this->server['baseDomain'];
-    //$this->shellexec("pm localServer deleteProject test");
     $this->shellexec("pm localServer createProject test $domain common");
     $this->runTest("(new TestRunnerProject('test'))->g()", 'test');
     chdir(dirname(__DIR__).'/pm');
