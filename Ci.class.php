@@ -99,7 +99,7 @@ class Ci extends GitBase {
       return;
     }
     foreach ($folders as $folder) {
-      if ((new GitFolder($folder))->resetToRemote('origin', true)) output("$folder: reset");
+      (new GitFolder($folder))->resetToRemote('origin', true);
     }
   }
 
