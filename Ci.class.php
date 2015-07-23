@@ -10,6 +10,7 @@ class Ci extends GitBase {
   protected $commonMailText = '';
 
   function __construct() {
+//die2();
     parent::__construct();
     Dir::clear(Ci::$tempFolder);
   }
@@ -54,7 +55,7 @@ class Ci extends GitBase {
       $this->libTests();
     }
     if (file_exists(NGN_ENV_PATH.'/projects') and $this->server['sType'] == 'prod') {
-      $this->runTest("(new TestRunnerNgn('projectsIndexAvailable'))->run()");
+      $this->runTest("ngn (new TestRunnerNgn('projectsIndexAvailable'))->run()");
     }
     //$this->runClientSideTests();
     $this->runTest("(new TestRunnerNgn('allErrors'))->run()");
@@ -117,25 +118,18 @@ class Ci extends GitBase {
     }
   }
 
-  protected function runTest($cmd, $project = null, $runInitPath = '') {
+  protected function runTest($subCmd) {
     if (getcwd() != NGN_ENV_PATH.'/run') chdir(NGN_ENV_PATH.'/run');
-    $testCheckFile = Ci::$tempFolder.'/tst'.md5($cmd.($project ?: ''));
+    $testCheckFile = Ci::$tempFolder.'/tst'.md5($subCmd);
     touch($testCheckFile);
-    if ($project) {
-      $runner = 'run.php site '.$project;
-    }
-    else {
-      $runner = 'run.php';
-    }
-    $testResult = $this->shellexec("php $runner \"$cmd; unlink('$testCheckFile');\"".($runInitPath ? ' '.$runInitPath : ''));
-    if (file_exists($testCheckFile)) $this->errors[] = ['test aborted: '.$cmd, 'test aborted: '.$cmd];
-    if (($error = TestCore::detectError($testResult))) $this->errors[] = [$testResult, $error];
-    if (preg_match('/<running tests: (.*)>/', $testResult, $m)) {
+    $cmdResult = $this->shellexec("tst $subCmd; rm $testCheckFile", false);
+    if (file_exists($testCheckFile)) $this->errors[] = ['test aborted: '.$subCmd, 'cmd result: '.$cmdResult];
+    if (($error = TestCore::detectError($cmdResult))) $this->errors[] = [$cmdResult, $error];
+    if (preg_match('/<running tests: (.*)>/', $cmdResult, $m)) {
       if (($tests = Misc::quoted2arr($m[1]))) {
-        $runInitPathPrefix = $runInitPath ? $runInitPath.'|' : $runInitPath;
-        if ($project) foreach ($tests as &$v) $v = Misc::removePrefix('Test', $v)." ({$runInitPathPrefix}$project)";
+//        if ($project) foreach ($tests as &$v) $v = Misc::removePrefix('Test', $v)." ({$runInitPathPrefix}$project)";
         $this->effectedTests = array_merge($this->effectedTests, $tests);
-        print $testResult;
+        print $cmdResult;
       }
     }
   }
@@ -180,12 +174,9 @@ class Ci extends GitBase {
       if (!file_exists("$folder/.ci")) continue;
       $libFolders[] = $folder;
     }
-    output('Found lib tests: '.implode(', ', array_map('basename', $libFolders)));
+    output('Found libs for testing: '.implode(', ', array_map('basename', $libFolders)));
     foreach ($libFolders as $folder) {
-      output3($folder);
-      $folder = file_exists("$folder/lib") ? "$folder/lib" : $folder;
-      $runInitPath = file_exists("$folder/init.php") ? "$folder/init.php" : $folder;
-      $this->runTest("(new TestRunnerLib('$folder'))->run()", null, $runInitPath);
+      $this->runTest('ngn '.basename($folder));
     }
   }
 
