@@ -55,10 +55,10 @@ class Ci extends GitBase {
       $this->libTests();
     }
     if (file_exists(NGN_ENV_PATH.'/projects') and $this->server['sType'] == 'prod') {
-      $this->runTest("ngn (new TestRunnerNgn('projectsIndexAvailable'))->run()");
+      //$this->runTest("ngn (new TestRunnerNgn('projectsIndexAvailable'))->run()");
     }
     //$this->runClientSideTests();
-    $this->runTest("(new TestRunnerNgn('allErrors'))->run()");
+    //$this->runTest("(new TestRunnerNgn('allErrors'))->run()");
     $this->sendResults();
     $this->updateStatus();
   }
@@ -190,8 +190,7 @@ class Ci extends GitBase {
   function projectTestCommon() {
     if (!$this->serverHasProjectsSupport()) return;
     $domain = 'test.'.$this->server['baseDomain'];
-    $this->shellexec("pm localServer createProject test $domain common");
-    $this->runTest("(new TestRunnerProject('test'))->g()", 'test');
+    $this->runTest("proj ", 'test');
     chdir(dirname(__DIR__).'/pm');
     $this->shellexec('php pm.php localProject delete test');
   }
@@ -222,7 +221,6 @@ class Ci extends GitBase {
 
   protected function runProjectsTests() {
     if (!file_exists(NGN_ENV_PATH.'/projects')) return;
-    $this->shellexec('pm localServer deleteProject test'); // удаляем тестовый проект, если мы вдруг создавали тестовый сервер вручную
     $this->projectTestCommon();
     //$this->projectTestSb();
     //$this->projectLocalTests();
@@ -257,7 +255,7 @@ class Ci extends GitBase {
 
   protected function updateStatus() {
     $r = ['time' => time()];
-    $r['success'] = count($this->errors);
+    $r['success'] = !count($this->errors);
     FileVar::updateVar(__DIR__.'/.status.php', $r);
   }
 
