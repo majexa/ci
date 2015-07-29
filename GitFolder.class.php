@@ -49,15 +49,23 @@ class GitFolder extends GitBase {
     $this->shellexec("git pull origin {$this->server['branch']}");
   }
 
+  /**
+   * Комитит папку и возвращает TRUE/FALSE в случае успеха/неуспеха
+   *
+   * @return bool
+   */
   function commit() {
     print `git add --all .`;
     $date = date('d.m.Y H:i:s');
     system("git commit -am \"Auto-commit on $date\"", $exitCode);
-    output3($this->folder.' EXIT CODE: '.$exitCode);
+    return !$exitCode;
   }
 
   /**
    * Для текущей ветки делает add, commit, а так же pull, push для всех репозиториев
+   *
+   * @param array $remoteFilter
+   * @return bool
    */
   function push($remoteFilter = []) {
     if ($remoteFilter) $remoteFilter = (array)$remoteFilter;
@@ -66,7 +74,7 @@ class GitFolder extends GitBase {
     if ($remoteFilter) $remotes = array_intersect($remotes, $remoteFilter);
     if (!$remotes) {
       output("$folder: skepped. no remotes".($remoteFilter ? '. Filter: '.implode(', ', $remoteFilter) : ''));
-      return;
+      return true;
     }
     $hasLocalChanges = false;
     if (!$this->isClean()) {
@@ -77,13 +85,14 @@ class GitFolder extends GitBase {
     $branch = $this->wdBranch();
     if (!$hasLocalChanges and !$this->_hasChanges($remotes, $branch)) {
       output("$folder ($branch): no changes remote and local changes");
-      return;
+      return true;
     }
     foreach ($remotes as $remote) {
       output("{$this->folder}: process remote '$remote'");
       $this->shellexec("git pull $remote $branch");
       $this->shellexec("git push $remote $branch");
     }
+    return true;
   }
 
   function hasChanges($branch = null) {
