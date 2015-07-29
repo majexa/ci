@@ -52,7 +52,8 @@ class GitFolder extends GitBase {
   function commit() {
     print `git add --all .`;
     $date = date('d.m.Y H:i:s');
-    print `git commit -am "Auto-commit on $date"`;
+    system(`git commit -am "Auto-commit on $date"`, $exitCode);
+    output3($this->folder.' EXIT CODE: '.$exitCode);
   }
 
   /**
