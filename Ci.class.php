@@ -39,6 +39,7 @@ class Ci extends GitBase {
       $this->updateBin();
       $this->updateCron();
       $this->updateDaemons();
+      //print `pm localProjects cmd update`;
     }
     $this->test();
     chdir($this->cwd);
@@ -189,7 +190,7 @@ class Ci extends GitBase {
    */
   function projectTestCommon() {
     if (!$this->serverHasProjectsSupport()) return;
-    $domain = 'test.'.$this->server['baseDomain'];
+    //$domain = 'test.'.$this->server['baseDomain'];
     $this->runTest("proj ", 'test');
     chdir(dirname(__DIR__).'/pm');
     $this->shellexec('php pm.php localProject delete test');
