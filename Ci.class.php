@@ -39,7 +39,7 @@ class Ci extends GitBase {
       $this->updateBin();
       $this->updateCron();
       $this->updateDaemons();
-      //print `pm localProjects cmd update`;
+      print `pm localProjects cmd update 1`;
     }
     $this->test();
     chdir($this->cwd);
