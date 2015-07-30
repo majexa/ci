@@ -52,7 +52,7 @@ class Ci extends GitBase {
     $this->clearErrors();
     $this->restart();
     if ($this->server['sType'] != 'prod') {
-      $this->runProjectsTests();
+      //$this->runProjectsTests();
       $this->libTests();
     }
     if (file_exists(NGN_ENV_PATH.'/projects') and $this->server['sType'] == 'prod') {
@@ -123,7 +123,7 @@ class Ci extends GitBase {
     if (getcwd() != NGN_ENV_PATH.'/run') chdir(NGN_ENV_PATH.'/run');
     $testCheckFile = Ci::$tempFolder.'/tst'.md5($subCmd);
     touch($testCheckFile);
-    $cmdResult = $this->shellexec("tst $subCmd; rm $testCheckFile", false);
+    $cmdResult = $this->shellexec("tst $subCmd; rm $testCheckFile", true);
     if (file_exists($testCheckFile)) $this->errors[] = ['test aborted: '.$subCmd, 'cmd result: '.$cmdResult];
     if (($error = TestCore::detectError($cmdResult))) $this->errors[] = [$cmdResult, $error];
     if (preg_match('/<running tests: (.*)>/', $cmdResult, $m)) {
@@ -177,7 +177,7 @@ class Ci extends GitBase {
     }
     output('Found libs for testing: '.implode(', ', array_map('basename', $libFolders)));
     foreach ($libFolders as $folder) {
-      $this->runTest('ngn '.basename($folder));
+      $this->runTest('lib '.basename($folder));
     }
   }
 
