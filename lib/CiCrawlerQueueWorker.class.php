@@ -13,7 +13,7 @@ class CiCrawlerQueueWorker extends QueueWorker {
     $path = str_replace(':', '-', $path);
     $path = trim($path, '-');
     $path = CI_PATH.'/web/captures/'.$path;
-    print `phantomjs /home/user/ngn-env/ci/phantomjs/capture.js $url $path`;
+    print shell_exec("phantomjs ".NGN_ENV_PATH."/ci/phantomjs/capture.js $url $path");
     try {
       (new Image)->resampleAndSave($path.'.png', $path.'.png', 100, 200);
     } catch (Exception $e) {
