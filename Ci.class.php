@@ -10,7 +10,6 @@ class Ci extends GitBase {
   protected $commonMailText = '';
 
   function __construct() {
-//die2();
     parent::__construct();
     Dir::clear(Ci::$tempFolder);
   }
@@ -52,7 +51,7 @@ class Ci extends GitBase {
     $this->clearErrors();
     $this->restart();
     if ($this->server['sType'] != 'prod') {
-      //$this->runProjectsTests();
+      $this->runProjectsTests();
       $this->libTests();
     }
     if (file_exists(NGN_ENV_PATH.'/projects') and $this->server['sType'] == 'prod') {
@@ -128,7 +127,6 @@ class Ci extends GitBase {
     if (($error = TestCore::detectError($cmdResult))) $this->errors[] = [$cmdResult, $error];
     if (preg_match('/<running tests: (.*)>/', $cmdResult, $m)) {
       if (($tests = Misc::quoted2arr($m[1]))) {
-//        if ($project) foreach ($tests as &$v) $v = Misc::removePrefix('Test', $v)." ({$runInitPathPrefix}$project)";
         $this->effectedTests = array_merge($this->effectedTests, $tests);
         print $cmdResult;
       }
@@ -190,10 +188,9 @@ class Ci extends GitBase {
    */
   function projectTestCommon() {
     if (!$this->serverHasProjectsSupport()) return;
-    //$domain = 'test.'.$this->server['baseDomain'];
-    $this->runTest("proj ", 'test');
+    $this->runTest('proj g test');
     chdir(dirname(__DIR__).'/pm');
-    $this->shellexec('php pm.php localProject delete test');
+    $this->shellexec('pm localProject delete test');
   }
 
   /**
