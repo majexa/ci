@@ -5,6 +5,8 @@
  */
 class Ci extends GitBase {
 
+  static $outputOnlyTestResult = false;
+
   protected $updatedFolders = [], $effectedTests = [];
   protected $isChanges = false;
   protected $commonMailText = '';
@@ -38,28 +40,44 @@ class Ci extends GitBase {
       $this->updateBin();
       $this->updateCron();
       $this->updateDaemons();
+      $this->updateScripts();
       print `pm localProjects cmd update 1`;
     }
     $this->test();
     chdir($this->cwd);
   }
 
+  function updateScripts() {
+    foreach ($this->paths as $path) {
+      foreach (glob("$path/*", GLOB_ONLYDIR) as $folder) {
+        if (!($files = glob("$folder/*.update"))) continue;
+        foreach ($files as $file) {
+          print `bash $file`;
+        }
+      }
+    }
+  }
+
   /**
    * Запускает все существующие в ngn-среде тесты и отправляет email с отчетом
    */
   function test() {
-    $this->clearErrors();
-    $this->restart();
-    if ($this->server['sType'] != 'prod') {
-      $this->runProjectsTests();
-      $this->libTests();
+    try {
+      $this->cleanup();
+      $this->restart();
+      if ($this->server['sType'] != 'prod') {
+        $this->runProjectsTests();
+        $this->runProjectsClientSideTests();
+        $this->libTests();
+      }
+//      if (file_exists(NGN_ENV_PATH.'/projects') and $this->server['sType'] == 'prod') {
+//        $this->runTest("ngn (new TestRunnerNgn('projectsIndexAvailable'))->run()");
+//      }
+      //$this->runTest("(new TestRunnerNgn('allErrors'))->run()");
+    } catch (Exception $e) {
+      $this->errors = $e->getMessage();
     }
-    if (file_exists(NGN_ENV_PATH.'/projects') and $this->server['sType'] == 'prod') {
-      //$this->runTest("ngn (new TestRunnerNgn('projectsIndexAvailable'))->run()");
-    }
-    //$this->runClientSideTests();
-    //$this->runTest("(new TestRunnerNgn('allErrors'))->run()");
-    $this->sendResults();
+    $this->sendReport();
     $this->updateStatus();
   }
 
@@ -70,7 +88,7 @@ class Ci extends GitBase {
     $this->_update();
   }
 
-  static $delimiter = "\n===================\n";
+  static $delimiter = "\n===================\n\n";
 
   protected function _update() {
     $this->updateEnvPackages();
@@ -122,14 +140,25 @@ class Ci extends GitBase {
     if (getcwd() != NGN_ENV_PATH.'/run') chdir(NGN_ENV_PATH.'/run');
     $testCheckFile = Ci::$tempFolder.'/tst'.md5($subCmd);
     touch($testCheckFile);
-    $cmdResult = $this->shellexec("tst $subCmd; rm $testCheckFile", true);
-    if (file_exists($testCheckFile)) $this->errors[] = ['test aborted: '.$subCmd, 'cmd result: '.$cmdResult];
-    if (($error = TestCore::detectError($cmdResult))) $this->errors[] = [$cmdResult, $error];
-    if (preg_match('/<running tests: (.*)>/', $cmdResult, $m)) {
+    $testTextResult = $this->shellexec("tst $subCmd; rm $testCheckFile");
+    /*
+    // Если вывод всех команд отключен, выводим результат теста принудительно
+    if (self::$outputOnlyTestResult) print $testTextResult;
+    */
+    // Если выполнение тестовой команды оборвалось нештатно
+    if (file_exists($testCheckFile)) throw new Exception('Test command "'.$subCmd.'" aborted. '."Command result:\n".$testTextResult);
+    // Парсим имена выполненных тестов
+    if (preg_match('/<running tests: (.*)>/', $testTextResult, $m)) {
       if (($tests = Misc::quoted2arr($m[1]))) {
         $this->effectedTests = array_merge($this->effectedTests, $tests);
-        print $cmdResult;
       }
+    }
+    // Если в тексте теста есть слова-ошибки
+    if (($error = TestCore::detectError($testTextResult))) {
+      // убираем всё, что не относится непосредственно к отчёту
+      $pos = strpos($testTextResult, '<--=-->') + strlen('<--=-->');
+      $testTextResult = substr($testTextResult, $pos, strlen($testTextResult));
+      throw new Exception($error.":\n".$testTextResult);
     }
   }
 
@@ -138,29 +167,34 @@ class Ci extends GitBase {
     print shell_exec("php ".NGN_ENV_PATH."/projects/test/cmd.php preTest/$name");
     print shell_exec( //
       "casperjs ".NGN_ENV_PATH."/ngn/more/casper/test.js --projectDir=".NGN_ENV_PATH."/projects/test ". //
-      "--disableAfterCaptureCmd=1 --stepsFile=$name --rumaxFolder=$rumaxFolder --ngnPath=".NGN_ENV_PATH."/ngn");
+      "--disableAfterCaptureCmd=1 --testName=$name --rumaxFolder=$rumaxFolder --ngnPath=".NGN_ENV_PATH."/ngn");
   }
 
   /**
-   * Запускает client-side тесты из стандартной библиотеки ngn-cst на тестовом проекте
+   * Запускает client-side тесты для проектов
    */
-  function runClientSideTests() {
-    $domain = 'test.'.$this->server['baseDomain'];
-    $this->shellexec("pm localServer createProject test $domain common");
-    Dir::copy(NGN_ENV_PATH.'/ngn-cst/dummyProject', NGN_ENV_PATH.'/projects/test', false);
-    foreach (glob(NGN_ENV_PATH.'/ngn-cst/casper/test/*.json') as $file) {
-      $this->runClientSideTest(str_replace('.json', '', basename($file)));
+  function runProjectsClientSideTests() {
+    $casperRunner = 'casperjs '.NGN_ENV_PATH.'/ngn-cst/casper/testProject.js';
+    foreach (glob(NGN_ENV_PATH.'/projects/*', GLOB_ONLYDIR) as $f) {
+      if (!file_exists("$f/site/casper")) continue;
+      $projectName = basename($f);
+      foreach (glob("$f/site/casper/test/*.json") as $script) {
+        $testName = str_replace('.json', '', basename($script));
+        $o = [];
+        exec("$casperRunner --projectName=$projectName --testName=$testName", $o, $code);
+        if ($code) throw new Exception(implode("\n", $o));
+        $this->effectedTests[] = str_replace(NGN_ENV_PATH.'/projects/', '', $script);
+      }
     }
-    $this->shellexec('php pm.php localProject delete test');
   }
 
-  protected $errors = [];
+  protected $errors = '';
 
   protected function shellexec($cmd, $output = true) {
+    if (self::$outputOnlyTestResult) $output = false;
     $r = Cli::shell($cmd, $output);
-    if (preg_match('/(?<!all)error/i', $r)) $this->errors[] = [$r, '"error" text in shell output of cmd: '.$cmd];
-    if (preg_match('/(?<!all)fatal/i', $r)) $this->errors[] = [$r, '"error" text in shell output of cmd: '.$cmd];
-    if ($this->errors) die2($this->errors);
+    if (preg_match('/(?<!all)error/i', $r)) throw new Exception('"error" text in shell output of cmd: '.$cmd."\noutput:\n$r");
+    if (preg_match('/(?<!all)fatal/i', $r)) throw new Exception('"error" text in shell output of cmd: '.$cmd."\noutput:\n$r");
     return $r;
   }
 
@@ -190,7 +224,7 @@ class Ci extends GitBase {
     if (!$this->serverHasProjectsSupport()) return;
     $this->runTest('proj g test');
     chdir(dirname(__DIR__).'/pm');
-    $this->shellexec('pm localProject delete test');
+    //$this->shellexec('pm localProject delete test');
   }
 
   /**
@@ -224,18 +258,16 @@ class Ci extends GitBase {
     //$this->projectLocalTests();
   }
 
-  protected function sendResults() {
+  protected function sendReport() {
     if ($this->effectedTests) $this->commonMailText .= 'Effected tests: '.implode(', ', $this->effectedTests).self::$delimiter;
     if ($this->errors) {
-      $err = '';
-      foreach ($this->errors as $v) $err .= $v[0];
       if (!empty($this->server['maintainer'])) {
-        (new SendEmail)->send($this->server['maintainer'], "Errors on {$this->server['baseDomain']}", $this->commonMailText.'<pre>'.$err.'</pre>');
+        (new SendEmail)->send($this->server['maintainer'], "Errors on {$this->server['baseDomain']}", '<pre>'.$this->commonMailText.$this->errors.'</pre>');
       }
       else {
         output("Email not sent. Set 'maintainer' in server config");
       }
-      print $err;
+      print $this->errors;
     }
     else {
       if ($this->commonMailText) {
@@ -261,11 +293,11 @@ class Ci extends GitBase {
     $this->shellexec('php '.NGN_ENV_PATH.'/pm/pm.php localProjects restart');
   }
 
-  function clearErrors() {
+  function cleanup() {
     chdir(dirname(__DIR__).'/run');
-    Cli::shell('php run.php "(new AllErrors)->clear()"');
+    $this->shellexec('php run.php "(new AllErrors)->clear()"');
     if (file_exists(NGN_ENV_PATH.'/projects')) {
-      $this->shellexec('php '.NGN_ENV_PATH.'/pm/pm.php localProjects cc');
+      $this->shellexec('php '.NGN_ENV_PATH.'/pm/pm.php localProjects cc', false);
     }
   }
 
@@ -280,17 +312,17 @@ class Ci extends GitBase {
     return $files;
   }
 
-    protected function cronRenderContents($file) {
-        $c = file_get_contents($file);
-        if (strstr($c, '{cmd}')) {
-            $folder = dirname($file);
-            if (!file_exists("$folder/cmd.php")) {
-                throw new Exception("U can't use {cmd} string without cmd.php file in '$folder' folder");
-            }
-            $c = str_replace('{cmd}', "php $folder/cmd.php", $c);
-        }
-        return trim($c);
+  protected function cronRenderContents($file) {
+    $c = file_get_contents($file);
+    if (strstr($c, '{cmd}')) {
+      $folder = dirname($file);
+      if (!file_exists("$folder/cmd.php")) {
+        throw new Exception("U can't use {cmd} string without cmd.php file in '$folder' folder");
+      }
+      $c = str_replace('{cmd}', "php $folder/cmd.php", $c);
     }
+    return trim($c);
+  }
 
   /**
    * Собирает крон всеми имеющимися в системе методами и заменяет им крон текущего юзера
@@ -300,8 +332,8 @@ class Ci extends GitBase {
     foreach ($this->findCronFiles() as $file) {
       $c = $this->cronRenderContents($file);
       if ($debug) {
-          output2($file);
-          output($c);
+        output2($file);
+        output($c);
       }
       $cron .= "$c\n";
     }
