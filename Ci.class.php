@@ -71,9 +71,10 @@ class Ci extends GitBase {
         $this->libTests();
       }
 //      if (file_exists(NGN_ENV_PATH.'/projects') and $this->server['sType'] == 'prod') {
-//        $this->runTest("ngn (new TestRunnerNgn('projectsIndexAvailable'))->run()");
+//        $this->runTest('ngn projectsIndexAvailable');
 //      }
-      //$this->runTest("(new TestRunnerNgn('allErrors'))->run()");
+      `run ci/crawler ci,crawl`;
+      $this->runTest('ngn allErrors');
     } catch (Exception $e) {
       $this->errors = $e->getMessage();
     }
