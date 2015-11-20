@@ -1,6 +1,6 @@
 <?php
 
-// ngn-daemon
+// n{disable}gn-daemon
 
 define('CI_PATH', __DIR__);
 

@@ -35,14 +35,6 @@ class Ci extends GitBase {
       output("no changes");
       if (!$forceUpdate) return;
     }
-    if (getOS() !== 'win') {
-      print `pm localProjects updateIndex`;
-      $this->updateBin();
-      $this->updateCron();
-      $this->updateDaemons();
-      $this->updateScripts();
-      print `pm localProjects cmd update 1`;
-    }
     $this->test();
     chdir($this->cwd);
   }
@@ -64,6 +56,14 @@ class Ci extends GitBase {
   function test() {
     try {
       $this->cleanup();
+      if (getOS() !== 'win') {
+        print `pm localProjects updateIndex`;
+        $this->updateBin();
+        $this->updateCron();
+        $this->updateDaemons();
+        $this->updateScripts();
+        print `pm localProjects cmd update 1`;
+      }
       $this->restart();
       if ($this->server['sType'] != 'prod') {
         $this->runProjectsTests();
@@ -159,30 +159,32 @@ class Ci extends GitBase {
       // убираем всё, что не относится непосредственно к отчёту
       $pos = strpos($testTextResult, '<--=-->') + strlen('<--=-->');
       $testTextResult = substr($testTextResult, $pos, strlen($testTextResult));
+      //throw new Exception($error.":\n".$testTextResult);
       throw new Exception($error.":\n".$testTextResult);
     }
-  }
-
-  protected function runClientSideTest($name) {
-    $rumaxFolder = NGN_ENV_PATH."/doc/web/m/daily-ngn-cst/$name";
-    print shell_exec("php ".NGN_ENV_PATH."/projects/test/cmd.php preTest/$name");
-    print shell_exec( //
-      "casperjs ".NGN_ENV_PATH."/ngn/more/casper/test.js --projectDir=".NGN_ENV_PATH."/projects/test ". //
-      "--disableAfterCaptureCmd=1 --testName=$name --rumaxFolder=$rumaxFolder --ngnPath=".NGN_ENV_PATH."/ngn");
   }
 
   /**
    * Запускает client-side тесты для проектов
    */
   function runProjectsClientSideTests() {
-    $casperRunner = 'casperjs '.NGN_ENV_PATH.'/ngn-cst/casper/testProject.js';
+    // common tests on "test" project
+    foreach (Dir::getFilesR(NGN_ENV_PATH.'/ngn-cst/casper/test') as $f) {
+      $f = Misc::removeSuffix('.json', str_replace(NGN_ENV_PATH.'/ngn-cst/casper/test/', '', $f));
+      $o = [];
+      exec("cst test $f", $o, $code);
+      if ($code) throw new Exception(implode("\n", $o));
+      $this->effectedTests[] = $f;
+    }
+    // local project tests
     foreach (glob(NGN_ENV_PATH.'/projects/*', GLOB_ONLYDIR) as $f) {
       if (!file_exists("$f/site/casper")) continue;
       $projectName = basename($f);
       foreach (glob("$f/site/casper/test/*.json") as $script) {
         $testName = str_replace('.json', '', basename($script));
         $o = [];
-        exec("$casperRunner --projectName=$projectName --testName=$testName", $o, $code);
+        exec("cst $projectName $testName", $o, $code);
+        // exec("$casperRunner --projectName=$projectName --testName=$testName", $o, $code);
         if ($code) throw new Exception(implode("\n", $o));
         $this->effectedTests[] = str_replace(NGN_ENV_PATH.'/projects/', '', $script);
       }
