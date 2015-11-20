@@ -168,6 +168,9 @@ class Ci extends GitBase {
    * Запускает client-side тесты для проектов
    */
   function runProjectsClientSideTests() {
+    print `pm localServer deleteProject test`;
+    print `pm localServer createTestProject common`;
+    print `run ngn-cst/cmd/update ngn-cst`;
     // common tests on "test" project
     foreach (Dir::getFilesR(NGN_ENV_PATH.'/ngn-cst/casper/test') as $f) {
       $f = Misc::removeSuffix('.json', str_replace(NGN_ENV_PATH.'/ngn-cst/casper/test/', '', $f));
