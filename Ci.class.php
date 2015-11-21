@@ -81,24 +81,27 @@ class Ci extends GitBase {
     // common tests on "test" project
     foreach (Dir::getFilesR(NGN_ENV_PATH.'/ngn-cst/casper/test') as $f) {
       $f = Misc::removeSuffix('.json', str_replace(NGN_ENV_PATH.'/ngn-cst/casper/test/', '', $f));
-      $o = [];
-      exec("cst test $f", $o, $code);
-      if ($code) throw new Exception(implode("\n", $o));
-      $this->effectedTests[] = $f;
+      $this->_cst('test', $f);
     }
     // local project tests
     foreach (glob(NGN_ENV_PATH.'/projects/*', GLOB_ONLYDIR) as $f) {
-      if (!file_exists("$f/site/casper")) continue;
+      if (file_exists("$f/.nonNgn")) continue;
       $projectName = basename($f);
+      $this->_cst($projectName, 'index');
+      if (!file_exists("$f/site/casper")) continue;
       foreach (glob("$f/site/casper/test/*.json") as $script) {
         $testName = str_replace('.json', '', basename($script));
-        $o = [];
-        exec("cst $projectName $testName", $o, $code);
-        // exec("$casperRunner --projectName=$projectName --testName=$testName", $o, $code);
-        if ($code) throw new Exception(implode("\n", $o));
-        $this->effectedTests[] = str_replace(NGN_ENV_PATH.'/projects/', '', $script);
+        $this->_cst($projectName, $testName);
       }
     }
+  }
+
+  protected function _cst($projectName, $testName) {
+    $o = [];
+    exec("cst $projectName $testName", $o, $code);
+    // exec("$casperRunner --projectName=$projectName --testName=$testName", $o, $code);
+    if ($code) throw new Exception(implode("\n", $o));
+    $this->effectedTests[] = str_replace(NGN_ENV_PATH.'/projects/', '', "cst: $projectName/$testName");
   }
 
   /**
