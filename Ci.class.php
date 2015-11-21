@@ -39,17 +39,6 @@ class Ci extends GitBase {
     chdir($this->cwd);
   }
 
-  function updateScripts() {
-    foreach ($this->paths as $path) {
-      foreach (glob("$path/*", GLOB_ONLYDIR) as $folder) {
-        if (!($files = glob("$folder/*.update"))) continue;
-        foreach ($files as $file) {
-          print `bash $file`;
-        }
-      }
-    }
-  }
-
   /**
    * Запускает все существующие в ngn-среде тесты и отправляет email с отчетом
    */
@@ -67,7 +56,7 @@ class Ci extends GitBase {
       $this->restart();
       if ($this->server['sType'] != 'prod') {
         $this->runProjectsTests();
-        $this->runProjectsClientSideTests();
+        $this->cst();
         $this->libTests();
       }
 //      if (file_exists(NGN_ENV_PATH.'/projects') and $this->server['sType'] == 'prod') {
@@ -80,6 +69,50 @@ class Ci extends GitBase {
     }
     $this->sendReport();
     $this->updateStatus();
+  }
+
+  /**
+   * Запускает client-side тесты для проектов
+   */
+  function cst() {
+    print `pm localServer deleteProject test`;
+    print `pm localServer createTestProject common`;
+    print `run ngn-cst/cmd/update ngn-cst`;
+    // common tests on "test" project
+    foreach (Dir::getFilesR(NGN_ENV_PATH.'/ngn-cst/casper/test') as $f) {
+      $f = Misc::removeSuffix('.json', str_replace(NGN_ENV_PATH.'/ngn-cst/casper/test/', '', $f));
+      $o = [];
+      exec("cst test $f", $o, $code);
+      if ($code) throw new Exception(implode("\n", $o));
+      $this->effectedTests[] = $f;
+    }
+    // local project tests
+    foreach (glob(NGN_ENV_PATH.'/projects/*', GLOB_ONLYDIR) as $f) {
+      if (!file_exists("$f/site/casper")) continue;
+      $projectName = basename($f);
+      foreach (glob("$f/site/casper/test/*.json") as $script) {
+        $testName = str_replace('.json', '', basename($script));
+        $o = [];
+        exec("cst $projectName $testName", $o, $code);
+        // exec("$casperRunner --projectName=$projectName --testName=$testName", $o, $code);
+        if ($code) throw new Exception(implode("\n", $o));
+        $this->effectedTests[] = str_replace(NGN_ENV_PATH.'/projects/', '', $script);
+      }
+    }
+  }
+
+  /**
+   * Запускает .update скрипты, найденные во всех ngn-env базовых путях
+   */
+  function updateScripts() {
+    foreach ($this->paths as $path) {
+      foreach (glob("$path/*", GLOB_ONLYDIR) as $folder) {
+        if (!($files = glob("$folder/*.update"))) continue;
+        foreach ($files as $file) {
+          print `bash $file`;
+        }
+      }
+    }
   }
 
   /**
@@ -161,36 +194,6 @@ class Ci extends GitBase {
       $testTextResult = substr($testTextResult, $pos, strlen($testTextResult));
       //throw new Exception($error.":\n".$testTextResult);
       throw new Exception($error.":\n".$testTextResult);
-    }
-  }
-
-  /**
-   * Запускает client-side тесты для проектов
-   */
-  function runProjectsClientSideTests() {
-    print `pm localServer deleteProject test`;
-    print `pm localServer createTestProject common`;
-    print `run ngn-cst/cmd/update ngn-cst`;
-    // common tests on "test" project
-    foreach (Dir::getFilesR(NGN_ENV_PATH.'/ngn-cst/casper/test') as $f) {
-      $f = Misc::removeSuffix('.json', str_replace(NGN_ENV_PATH.'/ngn-cst/casper/test/', '', $f));
-      $o = [];
-      exec("cst test $f", $o, $code);
-      if ($code) throw new Exception(implode("\n", $o));
-      $this->effectedTests[] = $f;
-    }
-    // local project tests
-    foreach (glob(NGN_ENV_PATH.'/projects/*', GLOB_ONLYDIR) as $f) {
-      if (!file_exists("$f/site/casper")) continue;
-      $projectName = basename($f);
-      foreach (glob("$f/site/casper/test/*.json") as $script) {
-        $testName = str_replace('.json', '', basename($script));
-        $o = [];
-        exec("cst $projectName $testName", $o, $code);
-        // exec("$casperRunner --projectName=$projectName --testName=$testName", $o, $code);
-        if ($code) throw new Exception(implode("\n", $o));
-        $this->effectedTests[] = str_replace(NGN_ENV_PATH.'/projects/', '', $script);
-      }
     }
   }
 
