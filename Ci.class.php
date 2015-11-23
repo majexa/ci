@@ -86,6 +86,7 @@ class Ci extends GitBase {
     // local project tests
     foreach (glob(NGN_ENV_PATH.'/projects/*', GLOB_ONLYDIR) as $f) {
       if (file_exists("$f/.nonNgn")) continue;
+      if (file_exists("$f/.keepIndex")) continue;
       $projectName = basename($f);
       $this->_cst($projectName, 'index');
       if (!file_exists("$f/site/casper")) continue;
@@ -98,8 +99,8 @@ class Ci extends GitBase {
 
   protected function _cst($projectName, $testName) {
     $o = [];
+    print `pm localProject replaceConstant $projectName more BUILD_MODE true`;
     exec("cst $projectName $testName", $o, $code);
-    // exec("$casperRunner --projectName=$projectName --testName=$testName", $o, $code);
     if ($code) throw new Exception(implode("\n", $o));
     $this->effectedTests[] = str_replace(NGN_ENV_PATH.'/projects/', '', "cst: $projectName/$testName");
   }
