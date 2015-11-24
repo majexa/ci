@@ -72,6 +72,22 @@ class Ci extends GitBase {
   }
 
   /**
+   * Собирает и пушит проект
+   */
+  function build() {
+    `pm localProjects replaceConstant more BUILD_MODE false`;
+    foreach (glob(NGN_ENV_PATH.'/projects/*') as $f) {
+      if (file_exists("$f/.nonNgn")) continue;
+      if (!file_exists("$f/.git")) continue;
+      //if (basename($f) != 'nnway-mobile') continue;
+      output2("Building ".basename($f));
+      $folder = new GitFolder($f);
+      $folder->commit('Release '.date('d.m.Y H:i:s'));
+      $folder->push();
+    }
+  }
+
+  /**
    * Запускает client-side тесты для проектов
    */
   function cst() {
