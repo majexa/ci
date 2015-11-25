@@ -75,9 +75,9 @@ class Ci extends GitBase {
    * Собирает и пушит проект
    */
   function build() {
-    `pm localProjects replaceConstant more BUILD_MODE true`;
+    `pm localProjects replaceConstant more BUILD_MODE true 0`;
     `pm localProjects cmd sflm/build`;
-    `pm localProjects replaceConstant more BUILD_MODE false`;
+    `pm localProjects replaceConstant more BUILD_MODE false 0`;
     foreach (glob(NGN_ENV_PATH.'/projects/*') as $f) {
       if (file_exists("$f/.nonNgn")) continue;
       if (!file_exists("$f/.git")) continue;
