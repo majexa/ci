@@ -75,15 +75,36 @@ class Ci extends GitBase {
    * Собирает и пушит проект
    */
   function build() {
+    `pm localProjects replaceConstant more BUILD_MODE true`;
+    `pm localProjects cmd sflm/build`;
     `pm localProjects replaceConstant more BUILD_MODE false`;
     foreach (glob(NGN_ENV_PATH.'/projects/*') as $f) {
       if (file_exists("$f/.nonNgn")) continue;
       if (!file_exists("$f/.git")) continue;
-      //if (basename($f) != 'nnway-mobile') continue;
       output2("Building ".basename($f));
       $folder = new GitFolder($f);
       $folder->commit('Release '.date('d.m.Y H:i:s'));
       $folder->push();
+    }
+  }
+
+  function release() {
+    $this->update(true);
+    if ($this->errors) {
+      output3('release aborted');
+      return;
+    }
+    $this->build();
+    $this->deploy();
+  }
+
+  function deploy() {
+    $serverConfig = require NGN_ENV_PATH.'/config/server.php';
+    if (empty($serverConfig['deployServers'])) {
+      throw new Exception('There are no deploy servers');
+    }
+    foreach ($serverConfig['deployServers'] as $host) {
+      print `ssh user@$host ci update`;
     }
   }
 
