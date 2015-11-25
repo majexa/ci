@@ -35,8 +35,7 @@ class Ci extends GitBase {
       output("no changes");
       if (!$forceUpdate) return;
     }
-    $this->test();
-    chdir($this->cwd);
+    print `ci test`;
   }
 
   /**
