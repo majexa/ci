@@ -13,7 +13,7 @@ class Ci extends GitBase {
 
   function __construct() {
     parent::__construct();
-    Dir::clear(Ci::$tempFolder);
+    Dir::clear(Ci::$tempFolder, true);
   }
 
   /**
