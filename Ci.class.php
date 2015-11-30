@@ -74,9 +74,7 @@ class Ci extends GitBase {
    * Собирает и пушит проект
    */
   function build() {
-    `pm localProjects replaceConstant more BUILD_MODE true 0`;
-    `pm localProjects cmd sflm/build`;
-    `pm localProjects replaceConstant more BUILD_MODE false 0`;
+    `pm localProjects cmd "(new SflmBuild)->run()"`;
     foreach (glob(NGN_ENV_PATH.'/projects/*') as $f) {
       if (file_exists("$f/.nonNgn")) continue;
       if (!file_exists("$f/.git")) continue;
@@ -123,6 +121,15 @@ class Ci extends GitBase {
     foreach (glob(NGN_ENV_PATH.'/projects/*', GLOB_ONLYDIR) as $f) {
       if (file_exists("$f/.nonNgn")) continue;
       if (file_exists("$f/.keepIndex")) continue;
+      /**
+       * @doc cst
+       * ##Выключение client-side тестирования##
+       *
+       * Для того, что бы выключить client-side тестирование при выполнении таких
+       * команд, как `ci update`, `ci test`, `ci release` необходимо создать пустой
+       * файл `.keepIndex` в корне проекта
+       */
+      if (file_exists("$f/.cstDisable")) continue;
       $projectName = basename($f);
       $this->_cst($projectName, 'index');
       if (!file_exists("$f/site/casper")) continue;
