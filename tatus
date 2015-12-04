@@ -1,0 +1,193 @@
+[1mdiff --git a/Ci.class.php b/Ci.class.php[m
+[1mindex 2c3979e..b8ba6c0 100644[m
+[1m--- a/Ci.class.php[m
+[1m+++ b/Ci.class.php[m
+[36m@@ -41,7 +41,8 @@[m [mclass Ci extends GitBase {[m
+   /**[m
+    * Запускает все существующие в ngn-среде тесты и отправляет email с отчетом[m
+    */[m
+[31m-  function test() {[m
+[32m+[m[32m  function test($issueId = null) {[m
+[32m+[m[32m    if ($issueId) $this->checkoutIssue($issueId);[m
+     try {[m
+       $this->cleanup();[m
+       if (getOS() !== 'win') {[m
+[36m@@ -70,40 +71,53 @@[m [mclass Ci extends GitBase {[m
+     $this->updateStatus();[m
+   }[m
+ [m
+[32m+[m[32m  function testAll() {[m
+[32m+[m[32m  }[m
+[32m+[m
+   /**[m
+[31m-   * Собирает и пушит проект[m
+[32m+[m[32m   * Собирает проекты[m
+    */[m
+   function build() {[m
+[31m-    `pm localProjects cmd "(new SflmBuild)->run()"`;[m
+[32m+[m[32m    print `pm localProjects cmd "(new SflmBuild)->run()"`;[m
+[32m+[m[32m    //$this->runTest('ngn allErrors');[m
+[32m+[m[32m  }[m
+[32m+[m
+[32m+[m[32m  /**[m
+[32m+[m[32m   * Комитит и пушит проекты[m
+[32m+[m[32m   */[m
+[32m+[m[32m  function release() {[m
+[32m+[m[32m    output2("Pushing projects");[m
+     foreach (glob(NGN_ENV_PATH.'/projects/*') as $f) {[m
+       if (file_exists("$f/.nonNgn")) continue;[m
+       if (!file_exists("$f/.git")) continue;[m
+[31m-      output2("Building ".basename($f));[m
+       $folder = new GitFolder($f);[m
+       $folder->commit('Release '.date('d.m.Y H:i:s'));[m
+       $folder->push();[m
+     }[m
+   }[m
+ [m
+[31m-  function release() {[m
+[31m-    $this->update(true);[m
+[31m-    if ($this->errors) {[m
+[31m-      output3('release aborted');[m
+[31m-      return;[m
+[31m-    }[m
+[31m-    $this->build();[m
+[31m-    $this->deploy();[m
+[31m-  }[m
+[31m-[m
+[31m-  function deploy() {[m
+[31m-    $serverConfig = require NGN_ENV_PATH.'/config/server.php';[m
+[31m-    if (empty($serverConfig['deployServers'])) {[m
+[31m-      throw new Exception('There are no deploy servers');[m
+[31m-    }[m
+[31m-    foreach ($serverConfig['deployServers'] as $host) {[m
+[31m-      print `ssh user@$host ci update`;[m
+[31m-    }[m
+[31m-  }[m
+[32m+[m[32m  /**[m
+[32m+[m[32m   * @throws Exception[m
+[32m+[m[32m   */[m
+[32m+[m[32m//  protected function _release_() {[m
+[32m+[m[32m//    $this->update(true);[m
+[32m+[m[32m//    if ($this->errors) {[m
+[32m+[m[32m//      output3('release aborted');[m
+[32m+[m[32m//      return;[m
+[32m+[m[32m//    }[m
+[32m+[m[32m//    $this->build();[m
+[32m+[m[32m//    $this->deploy();[m
+[32m+[m[32m//  }[m
+[32m+[m
+[32m+[m[32m//  function deploy() {[m
+[32m+[m[32m//    $serverConfig = require NGN_ENV_PATH.'/config/server.php';[m
+[32m+[m[32m//    if (empty($serverConfig['deployServers'])) {[m
+[32m+[m[32m//      throw new Exception('There are no deploy servers');[m
+[32m+[m[32m//    }[m
+[32m+[m[32m//    foreach ($serverConfig['deployServers'] as $host) {[m
+[32m+[m[32m//      print `ssh user@$host ci update`;[m
+[32m+[m[32m//    }[m
+[32m+[m[32m//  }[m
+ [m
+   /**[m
+    * Запускает client-side тесты для проектов[m
+[36m@@ -286,14 +300,14 @@[m [mclass Ci extends GitBase {[m
+   /**[m
+    * Запускает тесты SiteBuilder'а[m
+    */[m
+[31m-  function projectTestSb() {[m
+[31m-    if (!$this->serverHasProjectsSupport()) return;[m
+[31m-    $domain = 'test.'.$this->server['baseDomain'];[m
+[31m-    $this->shellexec("pm localServer createProject test $domain sb");[m
+[31m-    $this->runTest("(new TestRunnerPlib('test', 'sb'))->run()", 'test', 'sb');[m
+[31m-    chdir(dirname(__DIR__).'/pm');[m
+[31m-    $this->shellexec('php pm.php localProject delete test');[m
+[31m-  }[m
+[32m+[m[32m//  function projectTestSb() {[m
+[32m+[m[32m//    if (!$this->serverHasProjectsSupport()) return;[m
+[32m+[m[32m//    $domain = 'test.'.$this->server['baseDomain'];[m
+[32m+[m[32m//    $this->shellexec("pm localServer createProject test $domain sb");[m
+[32m+[m[32m//    $this->runTest("(new TestRunnerPlib('test', 'sb'))->run()", 'test', 'sb');[m
+[32m+[m[32m//    chdir(dirname(__DIR__).'/pm');[m
+[32m+[m[32m//    $this->shellexec('php pm.php localProject delete test');[m
+[32m+[m[32m//  }[m
+ [m
+   /**[m
+    * Запускает локальные проектные тесты на всех проектах[m
+[36m@@ -341,14 +355,19 @@[m [mclass Ci extends GitBase {[m
+ [m
+   protected function updateStatus() {[m
+     $r = ['time' => time()];[m
+[31m-    $r['success'] = !count($this->errors);[m
+[31m-    FileVar::updateVar(__DIR__.'/.status.php', $r);[m
+[32m+[m[32m    $r['success'] = empty($this->errors);[m
+[32m+[m[32m    FileVar::updateSubVar(__DIR__.'/.status.php', $this->masterBranch, $r);[m
+   }[m
+ [m
+   protected function restart() {[m
+     $this->shellexec('php '.NGN_ENV_PATH.'/pm/pm.php localProjects restart');[m
+   }[m
+ [m
+[32m+[m[32m  /**[m
+[32m+[m[32m   * Удаляет логи с ошибками и чистит кэш на всех проекта[m
+[32m+[m[32m   *[m
+[32m+[m[32m   * @throws Exception[m
+[32m+[m[32m   */[m
+   function cleanup() {[m
+     chdir(dirname(__DIR__).'/run');[m
+     $this->shellexec('php run.php "(new AllErrors)->clear()"');[m
+[36m@@ -472,17 +491,26 @@[m [mclass Ci extends GitBase {[m
+     }[m
+   }[m
+ [m
+[32m+[m[32m  /**[m
+[32m+[m[32m   * Отображает ngn-env пакеты для этого сервера[m
+[32m+[m[32m   */[m
+   function packages() {[m
+     if (($r = $this->getEnvPackages())) {[m
+       print 'Packages: '.implode(', ', $r)."\n";[m
+     }[m
+   }[m
+ [m
+[32m+[m[32m  /**[m
+[32m+[m[32m   * Устанавливает ngn-env пакет на этом сервера[m
+[32m+[m[32m   */[m
+   function installPackage($name) {[m
+     chdir(NGN_ENV_PATH);[m
+     print `git clone https://github.com/masted/$name`;[m
+   }[m
+ [m
+[32m+[m[32m  /**[m
+[32m+[m[32m   * Устанавливает ngn-env пакеты указанные в .packages.php на этом сервере[m
+[32m+[m[32m   */[m
+   function installPackages() {[m
+     if (($r = require __DIR__.'/.packages.php')) {[m
+       foreach ($r as $name) {[m
+[36m@@ -497,6 +525,19 @@[m [mclass Ci extends GitBase {[m
+     }[m
+   }[m
+ [m
+[32m+[m[32m  protected function checkoutMaster() {[m
+[32m+[m[32m    $this->reset();[m
+[32m+[m[32m  }[m
+[32m+[m
+[32m+[m[32m  protected function checkoutIssue($issueId) {[m
+[32m+[m[32m    foreach ((new IssueBranchFolders)->get()[$issueId] as $folder) {[m
+[32m+[m[32m      output2("Checkouting folder '$folder'");[m
+[32m+[m[32m      chdir($folder);[m
+[32m+[m[32m      print `git checkout i-$issueId`;[m
+[32m+[m[32m    }[m
+[32m+[m[32m    $this->masterBranch = 'i-'.$issueId;[m
+[32m+[m[32m  }[m
+[32m+[m
+   static $tempFolder;[m
+ [m
+ }[m
+[1mdiff --git a/init.php b/init.php[m
+[1mindex 56eb4b5..9c839d5 100644[m
+[1m--- a/init.php[m
+[1m+++ b/init.php[m
+[36m@@ -2,3 +2,4 @@[m
+ [m
+ //Lib::addFolder(NGN_ENV_PATH.'/crawl');[m
+ Lib::addFolder(__DIR__.'/lib');[m
+[32m+[m[32mLib::addFolder(dirname(__DIR__).'/issue');[m
+warning: LF will be replaced by CRLF in Ci.class.php.
+The file will have its original line endings in your working directory.

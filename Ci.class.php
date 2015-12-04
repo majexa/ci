@@ -70,40 +70,53 @@ class Ci extends GitBase {
     $this->updateStatus();
   }
 
+  function testAll() {
+  }
+
   /**
-   * Собирает и пушит проект
+   * Собирает проекты
    */
   function build() {
-    `pm localProjects cmd "(new SflmBuild)->run()"`;
+    print `pm localProjects cmd "(new SflmBuild)->run()"`;
+    //$this->runTest('ngn allErrors');
+  }
+
+  /**
+   * Комитит и пушит проекты
+   */
+  function release() {
+    output2("Pushing projects");
     foreach (glob(NGN_ENV_PATH.'/projects/*') as $f) {
       if (file_exists("$f/.nonNgn")) continue;
       if (!file_exists("$f/.git")) continue;
-      output2("Building ".basename($f));
       $folder = new GitFolder($f);
       $folder->commit('Release '.date('d.m.Y H:i:s'));
       $folder->push();
     }
   }
 
-  function release() {
-    $this->update(true);
-    if ($this->errors) {
-      output3('release aborted');
-      return;
-    }
-    $this->build();
-    $this->deploy();
-  }
+  /**
+   * @throws Exception
+   */
+//  protected function _release_() {
+//    $this->update(true);
+//    if ($this->errors) {
+//      output3('release aborted');
+//      return;
+//    }
+//    $this->build();
+//    $this->deploy();
+//  }
 
-  function deploy() {
-    $serverConfig = require NGN_ENV_PATH.'/config/server.php';
-    if (empty($serverConfig['deployServers'])) {
-      throw new Exception('There are no deploy servers');
-    }
-    foreach ($serverConfig['deployServers'] as $host) {
-      print `ssh user@$host ci update`;
-    }
-  }
+//  function deploy() {
+//    $serverConfig = require NGN_ENV_PATH.'/config/server.php';
+//    if (empty($serverConfig['deployServers'])) {
+//      throw new Exception('There are no deploy servers');
+//    }
+//    foreach ($serverConfig['deployServers'] as $host) {
+//      print `ssh user@$host ci update`;
+//    }
+//  }
 
   /**
    * Запускает client-side тесты для проектов
@@ -269,6 +282,15 @@ class Ci extends GitBase {
     }
   }
 
+  function _libTests() {
+    try {
+      $this->libTests();
+    }  catch (Exception $e) {
+      $this->errors = $e->getMessage();
+    }
+    $this->updateStatus();
+  }
+
   protected function serverHasProjectsSupport() {
     return file_exists(NGN_ENV_PATH.'/projects');
   }
@@ -286,14 +308,14 @@ class Ci extends GitBase {
   /**
    * Запускает тесты SiteBuilder'а
    */
-  function projectTestSb() {
-    if (!$this->serverHasProjectsSupport()) return;
-    $domain = 'test.'.$this->server['baseDomain'];
-    $this->shellexec("pm localServer createProject test $domain sb");
-    $this->runTest("(new TestRunnerPlib('test', 'sb'))->run()", 'test', 'sb');
-    chdir(dirname(__DIR__).'/pm');
-    $this->shellexec('php pm.php localProject delete test');
-  }
+//  function projectTestSb() {
+//    if (!$this->serverHasProjectsSupport()) return;
+//    $domain = 'test.'.$this->server['baseDomain'];
+//    $this->shellexec("pm localServer createProject test $domain sb");
+//    $this->runTest("(new TestRunnerPlib('test', 'sb'))->run()", 'test', 'sb');
+//    chdir(dirname(__DIR__).'/pm');
+//    $this->shellexec('php pm.php localProject delete test');
+//  }
 
   /**
    * Запускает локальные проектные тесты на всех проектах
@@ -341,14 +363,24 @@ class Ci extends GitBase {
 
   protected function updateStatus() {
     $r = ['time' => time()];
-    $r['success'] = !count($this->errors);
-    FileVar::updateVar(__DIR__.'/.status.php', $r);
+    if (empty($this->errors)) {
+      $r['success'] = true;
+    } else {
+      $r['success'] = false;
+      $r['errors'] = $this->errors;
+    }
+    FileVar::updateSubVar(__DIR__.'/.status.php', $this->masterBranch, $r);
   }
 
   protected function restart() {
     $this->shellexec('php '.NGN_ENV_PATH.'/pm/pm.php localProjects restart');
   }
 
+  /**
+   * Удаляет логи с ошибками и чистит кэш на всех проекта
+   *
+   * @throws Exception
+   */
   function cleanup() {
     chdir(dirname(__DIR__).'/run');
     $this->shellexec('php run.php "(new AllErrors)->clear()"');
@@ -472,17 +504,26 @@ class Ci extends GitBase {
     }
   }
 
+  /**
+   * Отображает ngn-env пакеты для этого сервера
+   */
   function packages() {
     if (($r = $this->getEnvPackages())) {
       print 'Packages: '.implode(', ', $r)."\n";
     }
   }
 
+  /**
+   * Устанавливает ngn-env пакет на этом сервера
+   */
   function installPackage($name) {
     chdir(NGN_ENV_PATH);
     print `git clone https://github.com/masted/$name`;
   }
 
+  /**
+   * Устанавливает ngn-env пакеты указанные в .packages.php на этом сервере
+   */
   function installPackages() {
     if (($r = require __DIR__.'/.packages.php')) {
       foreach ($r as $name) {
@@ -495,6 +536,25 @@ class Ci extends GitBase {
         print `git clone https://github.com/masted/$name`;
       }
     }
+  }
+
+  function checkoutMaster() {
+    foreach ($this->findGitFolders() as $folder) {
+      if ((new GitFolder($folder))->currentBranch() != 'master') {
+        chdir($folder);
+        print `git checkout master`;
+      }
+    }
+    $this->masterBranch = 'master';
+  }
+
+  function checkoutIssue($issueId) {
+    foreach ((new IssueBranchFolders)->get()[$issueId] as $folder) {
+      output2("Checkouting folder '$folder'");
+      chdir($folder);
+      print `git checkout i-$issueId`;
+    }
+    $this->masterBranch = 'i-'.$issueId;
   }
 
   static $tempFolder;
