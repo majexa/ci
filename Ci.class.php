@@ -230,15 +230,19 @@ class Ci extends GitBase {
     }
   }
 
-  protected function runTest($subCmd) {
+  function runTest($subCmd) {
+    return $this->shellexecTest($subCmd);
+  }
+
+  protected $errors = '';
+
+  protected function shellexecTest($subCmd, $output = true) {
     if (getcwd() != NGN_ENV_PATH.'/run') chdir(NGN_ENV_PATH.'/run');
+    $cmd = 'tst '.$subCmd;
+    if (self::$outputOnlyTestResult) $output = false;
     $testCheckFile = Ci::$tempFolder.'/tst'.md5($subCmd);
     touch($testCheckFile);
-    $testTextResult = $this->shellexec("tst $subCmd; rm $testCheckFile");
-    /*
-    // Если вывод всех команд отключен, выводим результат теста принудительно
-    if (self::$outputOnlyTestResult) print $testTextResult;
-    */
+    $testTextResult = Cli::shell("$cmd; rm $testCheckFile", false);
     // Если выполнение тестовой команды оборвалось нештатно
     if (file_exists($testCheckFile)) throw new Exception('Test command "'.$subCmd.'" aborted. '."Command result:\n".$testTextResult);
     // Парсим имена выполненных тестов
@@ -248,16 +252,19 @@ class Ci extends GitBase {
       }
     }
     // Если в тексте теста есть слова-ошибки
-    if (($error = TestCore::detectError($testTextResult))) {
+    if ($error = TestCore::detectError($testTextResult)) {
       // убираем всё, что не относится непосредственно к отчёту
-      $pos = strpos($testTextResult, '<--=-->') + strlen('<--=-->');
+      $pos = strpos($testTextResult, '<-t=t->') + strlen('<-t=t->');
       $testTextResult = substr($testTextResult, $pos, strlen($testTextResult));
-      //throw new Exception($error.":\n".$testTextResult);
-      throw new Exception($error.":\n".$testTextResult);
+      $pos = strpos($testTextResult, '1)') + 3;
+      $rrrr = substr($testTextResult, $pos, strpos($testTextResult, 'FAILURES!')-$pos-2);
+      //throw new Exception($error.":\n".$rrrr);
+      throw new Exception($rrrr);
     }
+    if (preg_match('/(?<!all)error/i', $testTextResult)) throw new Exception('"error" text in shell output of cmd: '.$cmd."\noutput:\n$r");
+    if (preg_match('/(?<!all)fatal/i', $testTextResult)) throw new Exception('"error" text in shell output of cmd: '.$cmd."\noutput:\n$r");
+    return $testTextResult;
   }
-
-  protected $errors = '';
 
   protected function shellexec($cmd, $output = true) {
     if (self::$outputOnlyTestResult) $output = false;
