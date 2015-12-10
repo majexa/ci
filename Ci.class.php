@@ -545,6 +545,27 @@ class Ci extends GitBase {
     }
   }
 
+  function _fetch() {
+    foreach ($this->findGitFolders() as $folder) {
+      chdir($folder);
+      if (($r = `git fetch -p`)) {
+        output3("git fetch -p for $folder");
+        print $r;
+      }
+    }
+  }
+
+  function _deleteRemovedBranches() {
+    foreach ((new IssueBranchFolders)->getRemoved() as $issueId => $folders) {
+      foreach ($folders as $folder) {
+        chdir($folder);
+        output3("delete branch i-$issueId at folder $folder");
+        print `git checkout master`;
+        print `git branch -D i-$issueId`;
+      }
+    }
+  }
+
   function checkoutMaster() {
     foreach ($this->findGitFolders() as $folder) {
       if ((new GitFolder($folder))->currentBranch() != 'master') {
@@ -562,6 +583,10 @@ class Ci extends GitBase {
       print `git checkout i-$issueId`;
     }
     $this->masterBranch = 'i-'.$issueId;
+  }
+
+  function _cleanStatus() {
+    FileVar::updateVar(__DIR__.'/.status.php', []);
   }
 
   static $tempFolder;
