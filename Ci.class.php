@@ -236,10 +236,16 @@ class Ci extends GitBase {
 
   protected $errors = '';
 
-  protected function shellexecTest($subCmd, $output = true) {
+  /**
+   * @param $subCmd
+   * @param array $options
+   *                       - Closure $testNamesMapper(array $testClasses) Ф-я возвращающая название теста и принимающая в качестве аргумента имя его класса
+   * @return string
+   * @throws Exception
+   */
+  protected function shellexecTest($subCmd, array $options = []) {
     if (getcwd() != NGN_ENV_PATH.'/run') chdir(NGN_ENV_PATH.'/run');
     $cmd = 'tst '.$subCmd;
-    if (self::$outputOnlyTestResult) $output = false;
     $testCheckFile = Ci::$tempFolder.'/tst'.md5($subCmd);
     touch($testCheckFile);
     $testTextResult = Cli::shell("$cmd; rm $testCheckFile", false);
@@ -248,6 +254,9 @@ class Ci extends GitBase {
     // Парсим имена выполненных тестов
     if (preg_match('/<running tests: (.*)>/', $testTextResult, $m)) {
       if (($tests = Misc::quoted2arr($m[1]))) {
+        if (isset($options['testNamesMapper'])) {
+          $tests = $options['testNamesMapper']($tests);
+        }
         $this->effectedTests = array_merge($this->effectedTests, $tests);
       }
     }
@@ -285,7 +294,15 @@ class Ci extends GitBase {
     }
     output('Found libs for testing: '.implode(', ', array_map('basename', $libFolders)));
     foreach ($libFolders as $folder) {
-      $this->runTest('lib '.basename($folder));
+      $libName = basename($folder);
+      $this->shellexecTest('lib '.$libName, [
+        'testNamesMapper' => function(array $testClasses) use ($libName) {
+          foreach ($testClasses as &$testClass) {
+            $testClass = "lib/$libName:".$testClass;
+          }
+          return $testClasses;
+        }
+      ]);
     }
   }
 
@@ -433,7 +450,7 @@ class Ci extends GitBase {
       $cron .= "$c\n";
     }
     if (file_exists(NGN_ENV_PATH.'/pm')) $cron .= $this->shellexec('pm localServer cron');
-    if ($this->server['sType'] != 'prod') $cron .= "30 4 * * * ci update 1 >> ".NGN_ENV_PATH."/logs/cron 2>&1\n";
+    if ($this->server['sType'] != 'prod') $cron .= "0,30 * * * * ci update 1 >> ".NGN_ENV_PATH."/logs/cron 2>&1\n";
     $currentCron = $this->shellexec("crontab -l", false);
     Errors::checkText($cron);
     if ($cron and $cron != $currentCron) {
