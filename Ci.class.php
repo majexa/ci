@@ -43,6 +43,8 @@ class Ci extends GitBase {
    */
 
   function test() {
+    $this->_cleanStatus();
+    $this->_deleteRemovedBranches();
     $this->_testIssues();
     $this->_testMaster();
     //$this->sendReport();
