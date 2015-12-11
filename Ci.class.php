@@ -41,7 +41,14 @@ class Ci extends GitBase {
   /**
    * Запускает все существующие в ngn-среде тесты и отправляет email с отчетом
    */
+
   function test() {
+    $this->_testIssues();
+    $this->_testMaster();
+    //$this->sendReport();
+  }
+
+  function _test() {
     try {
       $this->cleanup();
       if (getOS() !== 'win') {
@@ -66,11 +73,8 @@ class Ci extends GitBase {
     } catch (Exception $e) {
       $this->errors = $e->getMessage();
     }
-    $this->sendReport();
     $this->updateStatus();
-  }
-
-  function testAll() {
+    $this->outputReport();
   }
 
   /**
@@ -186,6 +190,7 @@ class Ci extends GitBase {
 
   protected function _update() {
     $this->updateEnvPackages();
+    $this->_fetch();
     if (!($folders = $this->findGitFolders())) {
       output("No git folders found");
       return false;
@@ -355,6 +360,7 @@ class Ci extends GitBase {
 
   protected function runProjectsTests() {
     if (!file_exists(NGN_ENV_PATH.'/projects')) return;
+    print `pm localServer deleleProject test`;
     $this->projectTestCommon();
     //$this->projectTestSb();
     //$this->projectLocalTests();
@@ -369,7 +375,6 @@ class Ci extends GitBase {
       else {
         output("Email not sent. Set 'maintainer' in server config");
       }
-      print $this->errors;
     }
     else {
       if ($this->commonMailText) {
@@ -381,6 +386,14 @@ class Ci extends GitBase {
           output("Email not sent. Set 'maintainer' in server config");
         }
       }
+      output("Complete successful. ".'Effected tests: '.implode(', ', $this->effectedTests));
+    }
+  }
+
+  protected function outputReport() {
+    if ($this->errors) {
+      print $this->errors;
+    } else {
       output("Complete successful. ".'Effected tests: '.implode(', ', $this->effectedTests));
     }
   }
@@ -563,6 +576,7 @@ class Ci extends GitBase {
   }
 
   function _fetch() {
+    output("Fetching all git folders");
     foreach ($this->findGitFolders() as $folder) {
       chdir($folder);
       if (($r = `git fetch -p`)) {
@@ -593,8 +607,22 @@ class Ci extends GitBase {
     $this->masterBranch = 'master';
   }
 
+  function _testIssues() {
+    foreach (array_keys((new IssueBranchFolders)->getAll()) as $issueId) {
+      output3("checkout $issueId");
+      $this->checkoutIssue($issueId);
+      $this->_test();
+    }
+  }
+
+  function _testMaster() {
+    output3("checkout master");
+    $this->checkoutMaster();
+    $this->_test();
+  }
+
   function checkoutIssue($issueId) {
-    foreach ((new IssueBranchFolders)->get()[$issueId] as $folder) {
+    foreach ((new IssueBranchFolders)->getAll()[$issueId] as $folder) {
       output2("Checkouting folder '$folder'");
       chdir($folder);
       print `git checkout i-$issueId`;
