@@ -360,7 +360,7 @@ class Ci extends GitBase {
 
   protected function runProjectsTests() {
     if (!file_exists(NGN_ENV_PATH.'/projects')) return;
-    print `pm localServer deleleProject test`;
+    print `pm localServer deleteProject test`;
     $this->projectTestCommon();
     //$this->projectTestSb();
     //$this->projectLocalTests();
