@@ -1,0 +1,50 @@
+{
+  "zen": "Approachable is better than simple.",
+  "hook_id": 6680881,
+  "hook": {
+    "url": "https://api.github.com/orgs/majexa/hooks/6680881",
+    "ping_url": "https://api.github.com/orgs/majexa/hooks/6680881/pings",
+    "id": 6680881,
+    "name": "web",
+    "active": true,
+    "events": ["push"],
+    "config": {
+      "url": "http://ci.ci.majexa.ru/update.php",
+      "content_type": "json",
+      "insecure_ssl": "0",
+      "secret": "********"
+    },
+    "updated_at": "2015-12-14T13:59:22Z",
+    "created_at": "2015-12-14T13:59:22Z"
+  },
+  "organization": {
+    "login": "majexa",
+    "id": 16289257,
+    "url": "https://api.github.com/orgs/majexa",
+    "repos_url": "https://api.github.com/orgs/majexa/repos",
+    "events_url": "https://api.github.com/orgs/majexa/events",
+    "members_url": "https://api.github.com/orgs/majexa/members{/member}",
+    "public_members_url": "https://api.github.com/orgs/majexa/public_members{/member}",
+    "avatar_url": "https://avatars.githubusercontent.com/u/16289257?v=3",
+    "description": null
+  },
+  "sender": {
+    "login": "masted",
+    "id": 64110,
+    "avatar_url": "https://avatars.githubusercontent.com/u/64110?v=3",
+    "gravatar_id": "",
+    "url": "https://api.github.com/users/masted",
+    "html_url": "https://github.com/masted",
+    "followers_url": "https://api.github.com/users/masted/followers",
+    "following_url": "https://api.github.com/users/masted/following{/other_user}",
+    "gists_url": "https://api.github.com/users/masted/gists{/gist_id}",
+    "starred_url": "https://api.github.com/users/masted/starred{/owner}{/repo}",
+    "subscriptions_url": "https://api.github.com/users/masted/subscriptions",
+    "organizations_url": "https://api.github.com/users/masted/orgs",
+    "repos_url": "https://api.github.com/users/masted/repos",
+    "events_url": "https://api.github.com/users/masted/events{/privacy}",
+    "received_events_url": "https://api.github.com/users/masted/received_events",
+    "type": "User",
+    "site_admin": false
+  }
+}

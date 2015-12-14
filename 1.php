@@ -1,6 +1,6 @@
 <?php
 
-$ci = new Ci;
+$ci = new Ci; 
 try {
   $ci->runTest('lib smon');
 } catch (Exception $e) {
