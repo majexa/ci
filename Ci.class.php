@@ -422,6 +422,8 @@ class Ci extends GitBase {
    */
   function cleanup() {
     chdir(dirname(__DIR__).'/run');
+    `run cc`;
+    `pm cc`;
     $this->shellexec('php run.php "(new AllErrors)->clear()"');
     if (file_exists(NGN_ENV_PATH.'/projects')) {
       $this->shellexec('php '.NGN_ENV_PATH.'/pm/pm.php localProjects cc', false);
