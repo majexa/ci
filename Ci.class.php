@@ -31,6 +31,10 @@ class Ci extends GitBase {
    * Приводит систему к актуальному состоянию и тестирует её
    */
   function update($forceUpdate = false) {
+    if (file_exists(__DIR__.'/.updating')) {
+      print "update in progress\n";
+      return;
+    }
     touch(__DIR__.'/.updating');
     if (!$this->_update()) {
       output("no changes");
