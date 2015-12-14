@@ -31,11 +31,13 @@ class Ci extends GitBase {
    * Приводит систему к актуальному состоянию и тестирует её
    */
   function update($forceUpdate = false) {
+    touch(__DIR__.'/.updating');
     if (!$this->_update()) {
       output("no changes");
       if (!$forceUpdate) return;
     }
     print `ci test`;
+    unlink(__DIR__.'/.updating');
   }
 
   /**
