@@ -32,8 +32,12 @@ class Ci extends GitBase {
    */
   function update($forceUpdate = false) {
     if (file_exists(__DIR__.'/.updating')) {
-      print "update in progress\n";
-      return;
+      if ($forceUpdate) {
+        unlink(__DIR__.'/.updating');
+      } else {
+        print "update in progress\n";
+        return;
+      }
     }
     touch(__DIR__.'/.updating');
     if (!$this->_update()) {
@@ -588,6 +592,7 @@ class Ci extends GitBase {
   function _fetch() {
     output("Fetching all git folders");
     foreach ($this->findGitFolders() as $folder) {
+      output2('Fetch '.$folder);
       chdir($folder);
       if (($r = `git fetch -p`)) {
         output3("git fetch -p for $folder");
