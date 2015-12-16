@@ -31,21 +31,27 @@ class Ci extends GitBase {
    * Приводит систему к актуальному состоянию и тестирует её
    */
   function update($forceUpdate = false) {
-    if (file_exists(__DIR__.'/.updating')) {
-      if ($forceUpdate) {
-        unlink(__DIR__.'/.updating');
-      } else {
-        print "update in progress\n";
-        return;
+    if ($this->server['sType'] == 'ci') {
+      // ci server logic
+      if (file_exists(__DIR__.'/.updating')) {
+        if ($forceUpdate) {
+          unlink(__DIR__.'/.updating');
+        } else {
+          print "update in progress\n";
+          return;
+        }
       }
+      touch(__DIR__.'/.updating');
+      if (!$this->_update()) {
+        output("no changes");
+        if (!$forceUpdate) return;
+      }
+      print `ci test`;
+      unlink(__DIR__.'/.updating');
+    } else {
+      // another server types logic
+      $this->_update();
     }
-    touch(__DIR__.'/.updating');
-    if (!$this->_update()) {
-      output("no changes");
-      if (!$forceUpdate) return;
-    }
-    print `ci test`;
-    unlink(__DIR__.'/.updating');
   }
 
   /**
