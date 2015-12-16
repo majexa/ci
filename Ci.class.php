@@ -478,7 +478,9 @@ class Ci extends GitBase {
       $cron .= "$c\n";
     }
     if (file_exists(NGN_ENV_PATH.'/pm')) $cron .= $this->shellexec('pm localServer cron');
-    if ($this->server['sType'] != 'prod') $cron .= "0,30 * * * * ci update 1 >> ".NGN_ENV_PATH."/logs/cron 2>&1\n";
+    if ($this->server['sType'] == 'ci') {
+      $cron .= "0,30 * * * * ci update 1 >> ".NGN_ENV_PATH."/logs/cron 2>&1\n";
+    }
     $currentCron = $this->shellexec("crontab -l", false);
     Errors::checkText($cron);
     if ($cron and $cron != $currentCron) {
