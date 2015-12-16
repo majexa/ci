@@ -431,6 +431,7 @@ class Ci extends GitBase {
    * @throws Exception
    */
   function cleanup() {
+    $this->errors = '';
     chdir(dirname(__DIR__).'/run');
     `run cc`;
     `pm cc`;
