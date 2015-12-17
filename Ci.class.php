@@ -293,8 +293,8 @@ class Ci extends GitBase {
       //throw new Exception($error.":\n".$rrrr);
       throw new Exception($rrrr);
     }
-    if (preg_match('/(?<!all)error/i', $testTextResult)) throw new Exception('"error" text in shell output of cmd: '.$cmd."\noutput:\n$r");
-    if (preg_match('/(?<!all)fatal/i', $testTextResult)) throw new Exception('"error" text in shell output of cmd: '.$cmd."\noutput:\n$r");
+    if (preg_match('/(?<!all)error/i', $testTextResult)) throw new Exception('"error" text in shell output of cmd: '.$cmd."\noutput:\n$testTextResult");
+    if (preg_match('/(?<!all)fatal/i', $testTextResult)) throw new Exception('"error" text in shell output of cmd: '.$cmd."\noutput:\n$testTextResult");
     return $testTextResult;
   }
 
