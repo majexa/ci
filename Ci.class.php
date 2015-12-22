@@ -206,6 +206,11 @@ class Ci extends GitBase {
 
   static $delimiter = "\n===================\n\n";
 
+  /**
+   * Обновляет git-каталоги и приводит их к мастеру
+   *
+   * @return bool
+   */
   protected function _update() {
     $this->updateEnvPackages();
     $this->_fetch();
@@ -214,7 +219,9 @@ class Ci extends GitBase {
       return false;
     }
     foreach ($folders as $folder) {
-      if ((new GitFolder($folder))->reset()) {
+      $gitFolder = new GitFolder($folder);
+      `git checkout master`;
+      if ($gitFolder->reset()) {
         output("$folder: updated");
         $this->updatedFolders[] = $folder;
       }
