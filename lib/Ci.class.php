@@ -445,7 +445,7 @@ class Ci extends GitBase {
    */
   function cleanup() {
     $this->errors = '';
-    chdir(dirname(__DIR__).'/run');
+    chdir(NGN_ENV_PATH.'/run');
     `run cc`;
     `pm cc`;
     $this->shellexec('php run.php "(new AllErrors)->clear()"');
