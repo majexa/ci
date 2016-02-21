@@ -157,7 +157,7 @@ class Ci extends GitBase {
       if (file_exists("$f/.nonNgn")) continue;
       if (file_exists("$f/.keepIndex")) continue;
       /**
-       * @doc cst
+       * @doc ci
        * ##Выключение client-side тестирования##
        *
        * Для того, что бы выключить client-side тестирование при выполнении таких
