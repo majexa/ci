@@ -355,7 +355,7 @@ class Ci extends GitBase {
   function projectTestCommon() {
     if (!$this->serverHasProjectsSupport()) return;
     $this->runTest('proj g test');
-    chdir(dirname(__DIR__).'/pm');
+    chdir(NGN_ENV_PATH.'/pm');
     //$this->shellexec('pm localProject delete test');
   }
 
