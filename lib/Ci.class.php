@@ -631,6 +631,7 @@ class Ci extends GitBase {
   function checkoutMaster() {
     foreach ($this->findGitFolders() as $folder) {
       if ((new GitFolder($folder))->currentBranch() != 'master') {
+        output2("checkout $folder");
         chdir($folder);
         print `git checkout master`;
       }
@@ -669,4 +670,4 @@ class Ci extends GitBase {
 
 }
 
-Ci::$tempFolder = __DIR__.'/temp';
+Ci::$tempFolder = dirname(__DIR__).'/temp';
