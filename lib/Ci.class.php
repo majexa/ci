@@ -212,7 +212,7 @@ class Ci extends GitBase {
    * @return bool
    */
   protected function _update() {
-    $this->updateEnvPackages();
+    $this->installEnvPackages();
     $this->_fetch();
     if (!($folders = $this->findGitFolders())) {
       output("No git folders found");
@@ -246,9 +246,9 @@ class Ci extends GitBase {
     }
   }
 
-  protected function updateEnvPackages() {
+  protected function installEnvPackages() {
     if (!isset($this->server['git'])) {
-      output('update env packages skiped. set server config "git" value');
+      output('install env packages skiped. set server config "git" value');
       return;
     }
     chdir(NGN_ENV_PATH);
