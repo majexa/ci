@@ -9,10 +9,19 @@ class Bin {
    */
   protected $paths;
 
+  /**
+   * Под каким пользователем установлен ngn-env
+   *
+   * @var string
+   */
+  protected $user;
+
   static $binFolder = '/usr/bin';
 
   function __construct(array $paths) {
     $this->paths = $paths;
+    $serverConfig = require NGN_ENV_PATH.'/config/server.php';
+    $this->user = isset($serverConfig['user']) ? $serverConfig['user'] : 'user';
     $this->checkSignature();
   }
 
@@ -55,13 +64,18 @@ class Bin {
 
   function runFiles() {
     $r = [];
+    Dir::make(TEMP_PATH.'/runFiles');
+    Dir::clear(TEMP_PATH.'/runFiles');
     foreach ($this->paths as $path) {
       foreach (glob("$path/*", GLOB_ONLYDIR) as $folder) {
         if (!($files = glob("$folder/*.run"))) continue;
         foreach ($files as $file) {
           $name = File::name($file);
           if (isset($r[$name])) throw new Exception("Duplicate run file name. {$r[$name]} & $file");
-          $r[$name] = $file;
+          $tempFile = TEMP_PATH.'/runFiles/'.basename($file);
+          copy($file, $tempFile);
+          file_put_contents($tempFile, str_replace(' ~/', " /home/{$this->user}/", file_get_contents($tempFile)));
+          $r[$name] = $tempFile;
         }
       }
     }
